@@ -20,9 +20,6 @@ class TokenRefresher(var authorizer: Authorizer?) {
     var client: IdClient? = null
     var flow: AuthorizationFlow? = null
 
-
-    var onTokenValid: (Token, String) -> Unit = { _, _ -> Unit }
-
     private var token: Token? = null
     private var tokenExpiration = 0L
     private var isRefreshing: Boolean = false
@@ -48,7 +45,7 @@ class TokenRefresher(var authorizer: Authorizer?) {
                     val refreshToken = jsonObject?.optString("refresh_token", null)
                     val scope = jsonObject?.optString("scope", null)
 
-                    if (accessToken != null && tokenType != null && expiresIn != null){
+                    if (accessToken != null && tokenType != null && expiresIn != null) {
                         token = Token(accessToken, tokenType, expiresIn, refreshToken, scope)
                         storage?.writeToken(token!!)
                         callback(token, null)
@@ -56,9 +53,13 @@ class TokenRefresher(var authorizer: Authorizer?) {
                         callback(null, TokenError("").getMessage())
                     }
                 } else {
+                    when (error) {
+                        "invalid_grant" -> requestCredentials(callback)
+                    }
                     callback(null, TokenError(error).getMessage())
                 }
             }
+            isRefreshing = false
         }
     }
 
@@ -69,9 +70,9 @@ class TokenRefresher(var authorizer: Authorizer?) {
         if (flow is ResourceOwnerFlow) {
             return if (token?.accessToken?.isNotEmpty() == true) {
                 when {
-                // case we have valid refresh token saved
+                    // case we have valid refresh token saved
                     tokenExpiration > System.currentTimeMillis() -> token
-                // case we have expired refresh token
+                    // case we have expired refresh token
                     else -> {
                         refreshToken(callback)
                         null
@@ -82,12 +83,6 @@ class TokenRefresher(var authorizer: Authorizer?) {
                 requestCredentials(callback)
                 null
             }
-//        } else if (flow is ClientCredentialsFlow) {
-//            val request = flow?.authenticate()
-//            authorizer?.authorize(request!!)
-//            request?.onResponse = { response, error -> }
-//            client?.execute(request!!)
-//            return null
         } else {
             return null
         }

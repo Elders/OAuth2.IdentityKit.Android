@@ -15,9 +15,9 @@ class VolleyNetworkClient(val context: Context) : IdClient {
     init {
         getRequestQueue()
     }
-// { request.onResponse(null, "n") }
     override fun execute(request: IdRequest) {
-        val volleyRequest = VolleyRequest(request, 1, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes())
+
+        val volleyRequest = VolleyRequest(request, request.method.value, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes())
         requestQueue?.add(volleyRequest)
     }
 

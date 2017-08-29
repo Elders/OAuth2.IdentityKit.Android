@@ -14,7 +14,7 @@ class ResourceOwnerFlow(scope: String, val authorizer: Authorizer) : Authorizati
 
     internal var uriScope = Uri.encode(scope)
 
-    var endPoint: String = "http://foo.bar/"
+    var endPoint: String = "https://foo.bar/token"
     override fun setTokenEndPoint(endPoint: String) {
         this.endPoint = endPoint
     }
@@ -26,6 +26,4 @@ class ResourceOwnerFlow(scope: String, val authorizer: Authorizer) : Authorizati
         authorizer.authorize(request)
         return request
     }
-
-
 }

@@ -6,20 +6,24 @@ import com.eldersoss.identitykit.oauth2.Token
 /**
  * Created by IvanVatov on 8/17/2017.
  */
-class BearerAutorizer(val method: Method) : Authorizer{
+class BearerAutorizer(val method: Method) : Authorizer {
 
-    var token : Token? = null
-    get() = null
+    private var token: Token? = null
 
-    enum class Method{
+    fun setToken(token: Token){this.token = token}
+
+    enum class Method {
         HEADER, BODY, QUERY;
     }
 
-    override fun authorize(request : IdRequest) {
-        when (method) {
-            Method.HEADER -> request.headers.put("Authorization", "Bearer $token")
-            Method.BODY -> NotImplementedError()
-            Method.QUERY -> NotImplementedError()
+    override fun authorize(request: IdRequest) {
+        val accessToken = token?.accessToken
+        if (accessToken != null) {
+            when (method) {
+                Method.HEADER -> request.headers.put("Authorization", "Bearer $accessToken")
+                Method.BODY -> NotImplementedError()
+                Method.QUERY -> NotImplementedError()
+            }
         }
     }
 }

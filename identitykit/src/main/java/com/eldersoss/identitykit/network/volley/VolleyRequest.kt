@@ -20,12 +20,15 @@ class VolleyRequest(var request: IdRequest, method: Int, url: String, listener: 
     }
 
     override fun deliverResponse(response: IdResponse) {
-        request.onResponse(response, "GG")
-        //listen.onSuccess(response)
+        request.onResponse(response, null)
     }
 
     override fun deliverError(volleyError: VolleyError){
-        request.onResponse(null, volleyError.message)
+        var response = IdResponse()
+        response.data = volleyError.networkResponse.data
+        response.statusCode = volleyError.networkResponse.statusCode
+        response.headers = volleyError.networkResponse.headers
+        request.onResponse(response, volleyError.message)
     }
 
     override fun getHeaders(): Map<String, String> {
@@ -37,7 +40,18 @@ class VolleyRequest(var request: IdRequest, method: Int, url: String, listener: 
     }
 
     override fun getBodyContentType(): String {
-        return "application/x-www-form-urlencoded"
+        return "application/x-www-form-urlencoded; charset=$paramsEncoding"
     }
 
+    override fun getPriority(): Priority {
+        return super.getPriority()
+    }
+
+    override fun getRetryPolicy(): RetryPolicy {
+        return super.getRetryPolicy()
+    }
+
+    override fun getParams(): MutableMap<String, String> {
+        return super.getParams()
+    }
 }

@@ -9,27 +9,25 @@ import java.nio.charset.Charset
  */
 class IdResponse {
 
-    var statusCode : Int? = null
-    var data : ByteArray? = null
-    var headers : Map<String, String> = HashMap()
+    var statusCode: Int? = null
+    var data: ByteArray? = null
+    var headers: Map<String, String> = HashMap()
 
-    fun getJson() : JSONObject? {
+    fun getJson(): JSONObject? {
         var stringData = getStringData()
-        if (statusCode == 200) {
-            return try {
-                JSONObject(stringData)
-            } catch (exception: JSONException) {
-                null
-            }
+        return try {
+            JSONObject(stringData)
+        } catch (exception: JSONException) {
+            null
         }
         return null
     }
 
-    fun getStringData(): String?{
+    fun getStringData(): String? {
         return data?.toString(Charset.forName(getContentType()))
     }
 
-    fun getContentType() : String {
+    fun getContentType(): String {
         val contentType = headers?.get("Content-Type")
         if (contentType != null) {
             val params = contentType!!.split(";".toRegex()).dropLastWhile({ it.isEmpty() }).toTypedArray()
