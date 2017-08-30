@@ -2,9 +2,9 @@ package com.eldersoss.identitykit;
 
 import android.os.Handler;
 
-import com.eldersoss.identitykit.network.IdClient;
-import com.eldersoss.identitykit.network.IdRequest;
-import com.eldersoss.identitykit.network.IdResponse;
+import com.eldersoss.identitykit.network.NetworkClient;
+import com.eldersoss.identitykit.network.NetworkRequest;
+import com.eldersoss.identitykit.network.NetworkResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by IvanVatov on 8/28/2017.
  */
 
-public class TestNetworkClient implements IdClient {
+public class TestNetworkClient implements NetworkClient {
 
     private ResponseCase responseCase;
 
@@ -23,12 +23,12 @@ public class TestNetworkClient implements IdClient {
     }
 
     @Override
-    public void execute(final IdRequest request) {
+    public void execute(final NetworkRequest request) {
         // case resource owner flow token request
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (request.getMethod() == IdRequest.Method.POST && request.getBody().equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")) {
+                if (request.getMethod() == NetworkRequest.Method.POST && request.getBody().equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")) {
                     switch (responseCase) {
                         case OK200: {
                             request.getOnResponse().invoke(response200(), null);
@@ -45,8 +45,8 @@ public class TestNetworkClient implements IdClient {
         this.responseCase = responseCase;
     }
 
-    IdResponse response200() {
-        IdResponse response = new IdResponse();
+    NetworkResponse response200() {
+        NetworkResponse response = new NetworkResponse();
         response.setStatusCode(200);
         Map<String, String> headers = new HashMap();
         putStandartHeaders(headers);
@@ -56,8 +56,8 @@ public class TestNetworkClient implements IdClient {
         return response;
     }
 
-    IdResponse responseProfile() {
-        IdResponse response = new IdResponse();
+    NetworkResponse responseProfile() {
+        NetworkResponse response = new NetworkResponse();
         response.setStatusCode(200);
         Map<String, String> headers = new HashMap();
         putStandartHeaders(headers);

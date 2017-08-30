@@ -4,20 +4,31 @@ import android.content.Context
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.Volley
-import com.eldersoss.identitykit.network.IdClient
-import com.eldersoss.identitykit.network.IdRequest
+import com.eldersoss.identitykit.network.NetworkClient
+import com.eldersoss.identitykit.network.NetworkRequest
 
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyNetworkClient(val context: Context) : IdClient {
+class VolleyNetworkClient(val context: Context) : NetworkClient {
 
     init {
         getRequestQueue()
     }
-    override fun execute(request: IdRequest) {
+    override fun execute(request: NetworkRequest) {
 
-        val volleyRequest = VolleyRequest(request, request.method.value, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes())
+        val method = when(request.method) {
+            "GET" -> 0
+            "POST" -> 1
+            "PUT" -> 2
+            "DELETE" -> 3
+            "HEAD" -> 4
+            "OPTIONS" -> 5
+            "TRACE" -> 6
+            "PATCH" -> 7
+            else -> -1
+        }
+        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes())
         requestQueue?.add(volleyRequest)
     }
 

@@ -3,9 +3,8 @@ package com.eldersoss.identitykit;
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BasicAuthorizer;
 import com.eldersoss.identitykit.authorization.BearerAutorizer;
-import com.eldersoss.identitykit.network.IdClient;;
-import com.eldersoss.identitykit.network.IdRequest;
-import com.eldersoss.identitykit.oauth2.TokenRefresher;
+import com.eldersoss.identitykit.network.NetworkClient;;
+import com.eldersoss.identitykit.network.NetworkRequest;
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow;
 import com.eldersoss.identitykit.oauth2.flows.ResourceOwnerFlow;
 
@@ -32,29 +31,29 @@ public class ResourceOwnerFlowTests {
     @Test
     public void identityKitInitializationTest() throws Exception {
         IdentityKit kit;
-        IdClient networkClient;
+        NetworkClient networkClient;
 
         Authorizer authorizer = new BasicAuthorizer("client", "secret");
         AuthorizationFlow flow = new ResourceOwnerFlow("read write openid email profile offline_access owner", authorizer);
         Authorizer tokenAuthorizer = new BearerAutorizer(BearerAutorizer.Method.HEADER);
         networkClient = new TestNetworkClient();
-        kit = new IdentityKit("https://account.foo.bar/token", flow, tokenAuthorizer, networkClient, new TestCredentialsProvider(), new TestTokenStorage(), new TokenRefresher(authorizer));
+        kit = new IdentityKit("https://account.foo.bar/token", flow, tokenAuthorizer, networkClient, new TestCredentialsProvider(), new TestTokenStorage(), new TokenRefresherOld(authorizer));
         assertTrue(kit != null);
     }
 
     @Test
     public void successAuthorizeTest() throws Exception {
         IdentityKit kit;
-        IdClient networkClient;
+        NetworkClient networkClient;
 
         Authorizer authorizer = new BasicAuthorizer("client", "secret");
         AuthorizationFlow flow = new ResourceOwnerFlow("read write openid email profile offline_access owner", authorizer);
         Authorizer tokenAuthorizer = new BearerAutorizer(BearerAutorizer.Method.HEADER);
         networkClient = new TestNetworkClient();
-        kit = new IdentityKit("https://account.foo.bar/token", flow, tokenAuthorizer, networkClient, new TestCredentialsProvider(), new TestTokenStorage(), new TokenRefresher(authorizer));
+        kit = new IdentityKit("https://account.foo.bar/token", flow, tokenAuthorizer, networkClient, new TestCredentialsProvider(), new TestTokenStorage(), new TokenRefresherOld(authorizer));
 
         ((TestNetworkClient) networkClient).setCase(TestNetworkClient.ResponseCase.OK200);
-        final IdRequest request = new IdRequest(IdRequest.Method.GET, "https://foo.bar/api/profile", new HashMap<String, String>(), "");
+        final NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, "https://foo.bar/api/profile", new HashMap<String, String>(), "");
         kit.authorize(request, new Function0<Unit>() {
             @Override
             public Unit invoke() {

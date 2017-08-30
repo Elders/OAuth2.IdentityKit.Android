@@ -2,29 +2,29 @@ package com.eldersoss.identitykit.network.volley
 
 import com.android.volley.*
 import com.android.volley.toolbox.HttpHeaderParser
-import com.eldersoss.identitykit.network.IdRequest
-import com.eldersoss.identitykit.network.IdResponse
+import com.eldersoss.identitykit.network.NetworkRequest
+import com.eldersoss.identitykit.network.NetworkResponse as KitResponse
 
 
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyRequest(var request: IdRequest, method: Int, url: String, listener: Response.ErrorListener, var headers: HashMap<String, String>, val bytes : ByteArray?) : Request<IdResponse>(method, url, listener) {
+class VolleyRequest(var request: NetworkRequest, method: Int, url: String, listener: Response.ErrorListener, var headers: HashMap<String, String>, val bytes : ByteArray?) : Request<KitResponse>(method, url, listener) {
 
-    override fun parseNetworkResponse(response: NetworkResponse): Response<IdResponse> {
-        var result = IdResponse()
+    override fun parseNetworkResponse(response: NetworkResponse): Response<KitResponse> {
+        var result = KitResponse()
         result.data = response.data
         result.statusCode = response.statusCode
         result.headers = response.headers
         return Response.success(result, HttpHeaderParser.parseCacheHeaders(response))
     }
 
-    override fun deliverResponse(response: IdResponse) {
+    override fun deliverResponse(response: KitResponse) {
         request.onResponse(response, null)
     }
 
     override fun deliverError(volleyError: VolleyError){
-        var response = IdResponse()
+        var response = KitResponse()
         response.data = volleyError.networkResponse.data
         response.statusCode = volleyError.networkResponse.statusCode
         response.headers = volleyError.networkResponse.headers
