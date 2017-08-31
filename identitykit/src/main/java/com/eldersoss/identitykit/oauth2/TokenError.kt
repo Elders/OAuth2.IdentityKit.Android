@@ -4,7 +4,12 @@ package com.eldersoss.identitykit.oauth2
 /**
  * Created by IvanVatov on 8/17/2017.
  */
-class TokenError(val errorMessage: String) {
+enum class TokenError(val errorMessage: String?) {
+    invalid_request("invalid_request"),
+    invalid_client("invalid_client"),
+    invalid_grant("invalid_grant"),
+    unknown(null);
+
     fun getMessage(): String{
         return when(errorMessage) {
             "invalid_request" -> "The request is missing a required parameter"

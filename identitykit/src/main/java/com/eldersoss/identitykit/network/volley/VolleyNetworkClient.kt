@@ -6,6 +6,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.Volley
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
+import com.eldersoss.identitykit.network.NetworkResponse
 
 /**
  * Created by IvanVatov on 8/18/2017.
@@ -15,7 +16,8 @@ class VolleyNetworkClient(val context: Context) : NetworkClient {
     init {
         getRequestQueue()
     }
-    override fun execute(request: NetworkRequest) {
+
+    override fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
 
         val method = when(request.method) {
             "GET" -> 0
@@ -28,7 +30,7 @@ class VolleyNetworkClient(val context: Context) : NetworkClient {
             "PATCH" -> 7
             else -> -1
         }
-        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes())
+        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes(), callback)
         requestQueue?.add(volleyRequest)
     }
 

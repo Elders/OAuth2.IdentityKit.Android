@@ -14,19 +14,24 @@ interface AuthorizationFlow {
 }
 
 fun authorizeAndPerform(request: NetworkRequest, authorizer: Authorizer, networkClient: NetworkClient, callback: (Token?, TokenError?) -> Unit) {
-    authorizer.authorize(request, { networkRequest: NetworkRequest, s: String? ->
+    authorizer.authorize(request, { networkRequest: NetworkRequest, error: TokenError? ->
         networkClient.execute(networkRequest, { networkResponse ->
             //Parse Token from network response
-            if (networkResponse.getJson() != null && networkResponse.statusCode == 200) {
-                var jsonObject = networkResponse.getJson()
-                val accessToken = jsonObject?.optString("access_token", null)
-                val tokenType = jsonObject?.optString("token_type", null)
-                val expiresIn = jsonObject?.optLong("expires_in", 0L)
-                val refreshToken = jsonObject?.optString("refresh_token", null)
-                val scope = jsonObject?.optString("scope", null)
-                if (accessToken != null && tokenType != null && expiresIn != null) {
-                    // if response is valid token return it to callback
-                    callback(Token(accessToken, tokenType, expiresIn, refreshToken, scope), null)
+            if (networkResponse.getJson() != null) {
+                when (networkResponse.statusCode) {
+                    200 -> {
+                        var jsonObject = networkResponse.getJson()
+                        val accessToken = jsonObject?.optString("access_token", null)
+                        val tokenType = jsonObject?.optString("token_type", null)
+                        val expiresIn = jsonObject?.optLong("expires_in", 0L)
+                        val refreshToken = jsonObject?.optString("refresh_token", null)
+                        val scope = jsonObject?.optString("scope", null)
+                        if (accessToken != null && tokenType != null && expiresIn != null) {
+                            // if response is valid token return it to callback
+                            callback(Token(accessToken, tokenType, expiresIn, refreshToken, scope), null)
+                        }
+                    }
+                    400 -> callback(null, TokenError.valueOf(networkResponse.getJson()!!.optString("error")))
                 }
             }
         })
