@@ -21,16 +21,15 @@ class VolleyRequest(var request: NetworkRequest, method: Int, url: String, liste
 
     override fun deliverResponse(response: KitResponse) {
         callback(response)
-        //request.onResponse(response, null)
     }
 
     override fun deliverError(volleyError: VolleyError){
         var response = KitResponse()
-        response.data = volleyError.networkResponse.data
-        response.statusCode = volleyError.networkResponse.statusCode
-        response.headers = volleyError.networkResponse.headers
+        response.data = volleyError.networkResponse?.data
+        response.statusCode = volleyError.networkResponse?.statusCode
+        response.headers = volleyError.networkResponse?.headers
+        response.error = VolleyNetworkError.server_error
         callback(response)
-        //request.onResponse(response, volleyError.message)
     }
 
     override fun getHeaders(): Map<String, String> {

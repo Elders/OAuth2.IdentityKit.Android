@@ -2,9 +2,13 @@ package com.eldersoss.identitykit;
 
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BasicAuthorizer;
-import com.eldersoss.identitykit.authorization.BearerAutorizer;
+import com.eldersoss.identitykit.authorization.BearerAuthorizer;
 import com.eldersoss.identitykit.network.NetworkClient;;
 import com.eldersoss.identitykit.network.NetworkRequest;
+import com.eldersoss.identitykit.network.NetworkResponse;
+import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher;
+import com.eldersoss.identitykit.oauth2.Error;
+import com.eldersoss.identitykit.oauth2.OAuth2Error;
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow;
 import com.eldersoss.identitykit.oauth2.flows.ResourceOwnerFlow;
 
@@ -17,8 +21,10 @@ import org.robolectric.shadows.ShadowLooper;
 import java.util.HashMap;
 
 import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function2;
 
+import static com.eldersoss.identitykit.storage.ConstantsKt.REFRESH_TOKEN;
 import static org.junit.Assert.*;
 
 /**
@@ -33,11 +39,17 @@ public class ResourceOwnerFlowTests {
         IdentityKit kit;
         NetworkClient networkClient;
 
-        Authorizer authorizer = new BasicAuthorizer("client", "secret");
-        AuthorizationFlow flow = new ResourceOwnerFlow("read write openid email profile offline_access owner", authorizer);
-        Authorizer tokenAuthorizer = new BearerAutorizer(BearerAutorizer.Method.HEADER);
         networkClient = new TestNetworkClient();
-        kit = new IdentityKit("https://account.foo.bar/token", flow, tokenAuthorizer, networkClient, new TestCredentialsProvider(), new TestTokenStorage(), new TokenRefresherOld(authorizer));
+        Authorizer authorizer = new BasicAuthorizer("client", "secret");
+        AuthorizationFlow flow = new ResourceOwnerFlow("https://account.foo.bar/token", new TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient);
+        kit = new IdentityKit(flow, BearerAuthorizer.Method.HEADER, new DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), new TestTokenStorage(), networkClient);
+
+        kit.authorizeAndExecute(new NetworkRequest("GET", "https://account.foo.bar/profile", new HashMap<String, String>(), ""), new Function1<NetworkResponse, Unit>() {
+            @Override
+            public Unit invoke(NetworkResponse networkResponse) {
+                return null;
+            }
+        });
         assertTrue(kit != null);
     }
 
@@ -45,22 +57,66 @@ public class ResourceOwnerFlowTests {
     public void successAuthorizeTest() throws Exception {
         IdentityKit kit;
         NetworkClient networkClient;
+        networkClient = new TestNetworkClient();
+        ((TestNetworkClient) networkClient).setCase(TestNetworkClient.ResponseCase.OK200);
 
         Authorizer authorizer = new BasicAuthorizer("client", "secret");
-        AuthorizationFlow flow = new ResourceOwnerFlow("read write openid email profile offline_access owner", authorizer);
-        Authorizer tokenAuthorizer = new BearerAutorizer(BearerAutorizer.Method.HEADER);
-        networkClient = new TestNetworkClient();
-        kit = new IdentityKit("https://account.foo.bar/token", flow, tokenAuthorizer, networkClient, new TestCredentialsProvider(), new TestTokenStorage(), new TokenRefresherOld(authorizer));
+        AuthorizationFlow flow = new ResourceOwnerFlow("https://account.foo.bar/token", new TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient);
+        kit = new IdentityKit(flow, BearerAuthorizer.Method.HEADER, new DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), new TestTokenStorage(), networkClient);
 
-        ((TestNetworkClient) networkClient).setCase(TestNetworkClient.ResponseCase.OK200);
-        final NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, "https://foo.bar/api/profile", new HashMap<String, String>(), "");
-        kit.authorize(request, new Function0<Unit>() {
+        final NetworkRequest request = new NetworkRequest("GET", "https://account.foo.bar/api/profile", new HashMap<String, String>(), "");
+        kit.authorize(request, new Function2<NetworkRequest, Error, Unit>() {
             @Override
-            public Unit invoke() {
-                // check headers contains access token
-                String headersAuthorization = request.getHeaders().get("Authorization");
-                String responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpZCI6IjYzMjIwNzg0YzUzODA3ZjVmZTc2Yjg4ZjZkNjdlMmExZTIxODlhZTEiLCJjbGllbnRfaWQiOiJUZXN0IENsaWVudCBJRCIsInVzZXJfaWQiOm51bGwsImV4cGlyZXMiOjEzODAwNDQ1NDIsInRva2VuX3R5cGUiOiJiZWFyZXIiLCJzY29wZSI6bnVsbH0.PcC4k8Q_etpU-J4yGFEuBUdeyMJhtpZFkVQ__sXpe78eSi7xTniqOOtgfWa62Y4sj5Npta8xPuDglH8Fueh_APZX4wGCiRE1P4nT4APQCOTbgcuCNXwjmP8znk9F76ID2WxThaMbmpsTTEkuyyUYQKCCdxlIcSbVvcLZUGKZ6-geyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ";
+            public Unit invoke(NetworkRequest networkRequest, Error error) {
+                String headersAuthorization = networkRequest.getHeaders().get("Authorization");
+                String responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
                 assertTrue(headersAuthorization.equalsIgnoreCase(responseAuthorization));
+                return null;
+            }
+        });
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
+    }
+
+    @Test
+    public void invalidGrandTest() throws Exception {
+        IdentityKit kit;
+        NetworkClient networkClient;
+        networkClient = new TestNetworkClient();
+        ((TestNetworkClient) networkClient).setCase(TestNetworkClient.ResponseCase.BAD400);
+
+        Authorizer authorizer = new BasicAuthorizer("client", "secret");
+        AuthorizationFlow flow = new ResourceOwnerFlow("https://account.foo.bar/token", new TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient);
+        kit = new IdentityKit(flow, BearerAuthorizer.Method.HEADER, new DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), new TestTokenStorage(), networkClient);
+
+        final NetworkRequest request = new NetworkRequest("GET", "https://account.foo.bar/api/profile", new HashMap<String, String>(), "");
+        kit.authorize(request, new Function2<NetworkRequest, Error, Unit>() {
+            @Override
+            public Unit invoke(NetworkRequest networkRequest, Error error) {
+                assertTrue(error.equals(OAuth2Error.invalid_grant));
+                return null;
+            }
+        });
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
+    }
+
+    @Test
+    public void refreshToken() throws Exception {
+        IdentityKit kit;
+        NetworkClient networkClient;
+        TestTokenStorage tokenStorage = new TestTokenStorage();
+        networkClient = new TestNetworkClient();
+        tokenStorage.write(REFRESH_TOKEN, "4f2aw4gf5ge0c3aa3as2e4f8a958c6");
+        ((TestNetworkClient) networkClient).setCase(TestNetworkClient.ResponseCase.REFRESH200);
+
+        Authorizer authorizer = new BasicAuthorizer("client", "secret");
+        AuthorizationFlow flow = new ResourceOwnerFlow("https://account.foo.bar/token", new TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient);
+        kit = new IdentityKit(flow, BearerAuthorizer.Method.HEADER, new DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), tokenStorage, networkClient);
+
+        final NetworkRequest request = new NetworkRequest("GET", "https://account.foo.bar/api/profile", new HashMap<String, String>(), "");
+        kit.authorize(request, new Function2<NetworkRequest, Error, Unit>() {
+            @Override
+            public Unit invoke(NetworkRequest networkRequest, Error error) {
+                assertTrue(error.equals(OAuth2Error.invalid_grant));
                 return null;
             }
         });

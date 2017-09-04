@@ -10,7 +10,7 @@ import com.eldersoss.identitykit.network.NetworkRequest
  */
 class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: NetworkClient, val authorizer: Authorizer) : TokenRefresher {
 
-    override fun refresh(refreshToken: String, scope: String?, callback: (Token?, TokenError?) -> Unit) {
+    override fun refresh(refreshToken: String, scope: String?, callback: (Token?, Error?) -> Unit) {
         var body = "grant_type=refresh_token&refresh_token=$refreshToken"
         if (scope != null) {
             val uriScope = Uri.encode(scope)
@@ -22,7 +22,7 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
             // Execute request
             when { networkRequest != null -> networkClient.execute(networkRequest, { networkResponse ->
                 //Parse Token from network response
-                if (networkResponse.getJson() != null && networkResponse.statusCode == 200) {
+                if (networkResponse.getJson() != null && networkResponse.statusCode in 200..299) {
                     var jsonObject = networkResponse.getJson()
                     val accessToken = jsonObject?.optString("access_token", null)
                     val tokenType = jsonObject?.optString("token_type", null)
@@ -33,7 +33,12 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
                         // if response is valid token return it to callback
                         callback(Token(accessToken, tokenType, expiresIn, refreshToken, scope), null)
                     }
+                } else if (networkResponse.statusCode in 400..499) {
+                    callback(null, OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error")))
+                } else {
+                    callback(null, networkResponse.error)
                 }
+
             })
             }
         })

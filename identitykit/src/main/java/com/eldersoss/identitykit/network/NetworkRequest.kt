@@ -17,8 +17,7 @@ import kotlin.collections.HashMap
  */
 open class NetworkRequest(val method: String, val url: String, val headers : HashMap<String, String>, var body : String) {
 
-    var onResponse: (NetworkResponse?, String?) -> Unit = { _, _ -> Unit }
-
+    //var onResponse: (NetworkResponse?, String?) -> Unit = { _, _ -> Unit }
     fun getBodyBytes(): ByteArray? {
         return try {
             body?.toByteArray(charset("utf-8"))

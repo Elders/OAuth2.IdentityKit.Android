@@ -4,14 +4,19 @@ package com.eldersoss.identitykit.oauth2
 /**
  * Created by IvanVatov on 8/17/2017.
  */
-enum class TokenError(val errorMessage: String?) {
+enum class OAuth2Error(val errorMessage: String?) : Error{
+    // OAuth2 errors
     invalid_request("invalid_request"),
     invalid_client("invalid_client"),
     invalid_grant("invalid_grant"),
+    unauthorized_client("unauthorized_client"),
+    unsupported_grant_type("unsupported_grant_type"),
+    invalid_scope("invalid_scope"),
     unknown(null);
 
-    fun getMessage(): String{
+    override fun getMessage(): String{
         return when(errorMessage) {
+        // OAuth2 error messages
             "invalid_request" -> "The request is missing a required parameter"
             "invalid_client" -> "Unknown client, no client authentication included, or unsupported authentication method"
             "invalid_grant" -> "The provided authorization grant or refresh token is invalid"

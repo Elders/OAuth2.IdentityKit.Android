@@ -10,21 +10,21 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public class TestTokenStorage implements TokenStorage {
-    private Token token;
+    private String token;
 
     @Nullable
     @Override
-    public Token readToken() {
+    public String read(String key) {
         return token;
     }
 
     @Override
-    public void deleteToken() {
+    public void delete(String key) {
         token = null;
     }
 
     @Override
-    public void writeToken(Token token) {
+    public void write(String key,String token) {
         this.token = token;
     }
 }

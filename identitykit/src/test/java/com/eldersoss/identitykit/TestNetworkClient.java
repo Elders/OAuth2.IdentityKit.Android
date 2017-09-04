@@ -9,6 +9,9 @@ import com.eldersoss.identitykit.network.NetworkResponse;
 import java.util.HashMap;
 import java.util.Map;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+
 /**
  * Created by IvanVatov on 8/28/2017.
  */
@@ -19,23 +22,53 @@ public class TestNetworkClient implements NetworkClient {
 
     enum ResponseCase {
         OK200,
+        REFRESH200,
+        BAD400,
         NONE;
     }
 
     @Override
-    public void execute(final NetworkRequest request) {
+    public void execute(final NetworkRequest request, final Function1<? super NetworkResponse, Unit> callback) {
         // case resource owner flow token request
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (request.getMethod() == NetworkRequest.Method.POST && request.getBody().equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")) {
+
+                if (request.getMethod() == "POST"
+                        && request.getBody().equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
                         case OK200: {
-                            request.getOnResponse().invoke(response200(), null);
+                            callback.invoke(response200());
+                            break;
+                        }
+                        case BAD400: {
+                            callback.invoke(response400());
+                            break;
                         }
                     }
-                } else {
-                    request.getOnResponse().invoke(responseProfile(), null);
+                //refresh token response
+                } else if (request.getMethod() == "POST"
+                        && request.getBody().equalsIgnoreCase("grant_type=refresh_token&refresh_token=4f2aw4gf5ge0c3aa3as2e4f8a958c6")
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
+                    switch (responseCase) {
+                        case OK200: {
+                            callback.invoke(response200());
+                            break;
+                        }
+                        case REFRESH200: {
+                            callback.invoke(response200refresh());
+                            break;
+                        }
+                        case BAD400: {
+                            callback.invoke(response400());
+                            break;
+                        }
+                    }
+
+                } else if (request.getMethod() == "GET"
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9")) {
+                    callback.invoke(responseProfile());
                 }
             }
         }, 200);
@@ -51,7 +84,29 @@ public class TestNetworkClient implements NetworkClient {
         Map<String, String> headers = new HashMap();
         putStandartHeaders(headers);
         response.setHeaders(headers);
-        byte[] body = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpZCI6IjYzMjIwNzg0YzUzODA3ZjVmZTc2Yjg4ZjZkNjdlMmExZTIxODlhZTEiLCJjbGllbnRfaWQiOiJUZXN0IENsaWVudCBJRCIsInVzZXJfaWQiOm51bGwsImV4cGlyZXMiOjEzODAwNDQ1NDIsInRva2VuX3R5cGUiOiJiZWFyZXIiLCJzY29wZSI6bnVsbH0.PcC4k8Q_etpU-J4yGFEuBUdeyMJhtpZFkVQ__sXpe78eSi7xTniqOOtgfWa62Y4sj5Npta8xPuDglH8Fueh_APZX4wGCiRE1P4nT4APQCOTbgcuCNXwjmP8znk9F76ID2WxThaMbmpsTTEkuyyUYQKCCdxlIcSbVvcLZUGKZ6-geyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ\",\"expires_in\":3600,\"token_type\":\"Bearer\",\"refresh_token\":\"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"}".getBytes();
+        byte[] body = "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9\",\"expires_in\":3600,\"token_type\":\"Bearer\",\"refresh_token\":\"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"}".getBytes();
+        response.setData(body);
+        return response;
+    }
+
+    NetworkResponse response200refresh() {
+        NetworkResponse response = new NetworkResponse();
+        response.setStatusCode(200);
+        Map<String, String> headers = new HashMap();
+        putStandartHeaders(headers);
+        response.setHeaders(headers);
+        byte[] body = "{\"access_token\":\"TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ\",\"expires_in\":3600,\"token_type\":\"Bearer\",\"refresh_token\":\"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"}".getBytes();
+        response.setData(body);
+        return response;
+    }
+
+    NetworkResponse response400() {
+        NetworkResponse response = new NetworkResponse();
+        response.setStatusCode(400);
+        Map<String, String> headers = new HashMap();
+        putStandartHeaders(headers);
+        response.setHeaders(headers);
+        byte[] body = "{\"error\":\"invalid_grant\"}".getBytes();
         response.setData(body);
         return response;
     }
@@ -67,8 +122,7 @@ public class TestNetworkClient implements NetworkClient {
         return response;
     }
 
-
-    private void putStandartHeaders(Map<String, String> headers){
+    private void putStandartHeaders(Map<String, String> headers) {
         headers.put("Cache-Control", "no-store, no-cache, max-age=0, private");
         headers.put("Pragma", "no-cache");
         headers.put("Content-Length", "1000");

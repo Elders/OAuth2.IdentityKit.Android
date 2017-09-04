@@ -1,6 +1,6 @@
 package com.eldersoss.identitykit.network
 
-import org.json.JSONException
+import com.eldersoss.identitykit.oauth2.Error
 import org.json.JSONObject
 import java.nio.charset.Charset
 
@@ -11,14 +11,17 @@ class NetworkResponse {
 
     var statusCode: Int? = null
     var data: ByteArray? = null
-    var headers: Map<String, String> = HashMap()
+    var headers: Map<String, String>? = null
+    var error: Error? = null
 
     fun getJson(): JSONObject? {
         var stringData = getStringData()
-        return try {
-            JSONObject(stringData)
-        } catch (exception: JSONException) {
-            null
+        if (stringData != null) {
+            return try {
+                JSONObject(stringData)
+            } catch (exception: Throwable) {
+                null
+            }
         }
         return null
     }
