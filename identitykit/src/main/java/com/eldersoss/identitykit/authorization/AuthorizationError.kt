@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package com.eldersoss.identitykit.storage
+package com.eldersoss.identitykit.authorization
+
+import com.eldersoss.identitykit.oauth2.Error
 
 /**
- * Created by IvanVatov on 9/1/2017.
+ * Created by IvanVatov on 9/4/2017.
  */
-const val REFRESH_TOKEN = "refresh_token"
-const val SCOPE = "scope"
+enum class AuthorizationError(val errorMessage: String?) : Error {
+    invalid_method("invalid_method"),
+    invalid_content_type("invalid_content_type"),
+    unknown(null);
+
+    override fun getMessage(): String{
+        return when(errorMessage) {
+            "invalid_method" -> "The requested method is not valid for this authorization"
+            "invalid_content_type" -> "Invalid content type for this authorization"
+            else -> "Unknown error"
+        }
+    }
+}

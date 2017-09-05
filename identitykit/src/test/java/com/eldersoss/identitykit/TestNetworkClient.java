@@ -5,12 +5,17 @@ import android.os.Handler;
 import com.eldersoss.identitykit.network.NetworkClient;
 import com.eldersoss.identitykit.network.NetworkRequest;
 import com.eldersoss.identitykit.network.NetworkResponse;
+import com.eldersoss.identitykit.network.volley.VolleyNetworkError;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+
+import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET;
 
 /**
  * Created by IvanVatov on 8/28/2017.
@@ -33,10 +38,16 @@ public class TestNetworkClient implements NetworkClient {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
+                String bodyString = "";
+                try {
+                    bodyString = new String(request.getBody(), DEFAULT_CHARSET);
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
 
                 if (request.getMethod() == "POST"
-                        && request.getBody().equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
-                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
+                        && bodyString.equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==\n")) {
                     switch (responseCase) {
                         case OK200: {
                             callback.invoke(response200());
@@ -46,11 +57,14 @@ public class TestNetworkClient implements NetworkClient {
                             callback.invoke(response400());
                             break;
                         }
+                        default: {
+                            callback.invoke(internalServerError());
+                        }
                     }
-                //refresh token response
+                    //refresh token response
                 } else if (request.getMethod() == "POST"
-                        && request.getBody().equalsIgnoreCase("grant_type=refresh_token&refresh_token=4f2aw4gf5ge0c3aa3as2e4f8a958c6")
-                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
+                        && bodyString.equalsIgnoreCase("grant_type=refresh_token&refresh_token=4f2aw4gf5ge0c3aa3as2e4f8a958c6")
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==\n")) {
                     switch (responseCase) {
                         case OK200: {
                             callback.invoke(response200());
@@ -64,11 +78,38 @@ public class TestNetworkClient implements NetworkClient {
                             callback.invoke(response400());
                             break;
                         }
+                        default: {
+                            callback.invoke(internalServerError());
+                        }
                     }
-
+                    //client credentials response
+                } else if (request.getMethod() == "POST"
+                        && bodyString.equalsIgnoreCase("grant_type=client_credentials&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==\n")) {
+                    switch (responseCase) {
+                        case OK200: {
+                            callback.invoke(response200());
+                            break;
+                        }
+                        case REFRESH200: {
+                            callback.invoke(response200refresh());
+                            break;
+                        }
+                        case BAD400: {
+                            callback.invoke(response400());
+                            break;
+                        }
+                        default: {
+                            callback.invoke(internalServerError());
+                        }
+                    }
+                    // Profile response
                 } else if (request.getMethod() == "GET"
                         && request.getHeaders().get("Authorization").equalsIgnoreCase("Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9")) {
                     callback.invoke(responseProfile());
+                    // Network error response
+                } else {
+                    callback.invoke(internalServerError());
                 }
             }
         }, 200);
@@ -118,6 +159,18 @@ public class TestNetworkClient implements NetworkClient {
         putStandartHeaders(headers);
         response.setHeaders(headers);
         byte[] body = "{\"result\": [{\"type\": \"profileid\",\"value\": \"123\"},{\"type\": \"name\",\"value\": \"Identity Kit\"}]}".getBytes();
+        response.setData(body);
+        return response;
+    }
+
+    NetworkResponse internalServerError() {
+        NetworkResponse response = new NetworkResponse();
+        response.setError(VolleyNetworkError.server_error);
+        response.setStatusCode(500);
+        Map<String, String> headers = new HashMap();
+        putStandartHeaders(headers);
+        response.setHeaders(headers);
+        byte[] body = "Internal Server Error".getBytes();
         response.setData(body);
         return response;
     }

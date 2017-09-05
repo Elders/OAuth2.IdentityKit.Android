@@ -1,29 +1,39 @@
+/*
+ * Copyright (c) 2017. Elders LTD
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.eldersoss.identitykit.network
 
-import android.util.Log
-import java.io.UnsupportedEncodingException
 import kotlin.collections.HashMap
 
 /**
- * Created by IvanVatov on 8/17/2017.
+ * Sample network request, the library have ability to authorize this type of network request
+ * @property method String request method.
+ * @property url String url address
+ * @property headers key, value HashMap of headers
+ * @property body usually UTF-8 encoded
+ * @constructor Network request
  */
+open class NetworkRequest(val method: String, var url: String, var headers : HashMap<String, String>, var body : ByteArray) {
 
-/**
- * @param method request method.
- * @param url url address
- * @param headers headers
- * @property body body - string UTF-8 encoded.
- * @constructor Creates network request.
- */
-open class NetworkRequest(val method: String, val url: String, val headers : HashMap<String, String>, var body : String) {
+     var bodyContentType = BODY_CONTENT_TYPE
 
-    //var onResponse: (NetworkResponse?, String?) -> Unit = { _, _ -> Unit }
-    fun getBodyBytes(): ByteArray? {
-        return try {
-            body?.toByteArray(charset("utf-8"))
-        } catch (uee: UnsupportedEncodingException) {
-            Log.e("Error Encoding utf-8", uee.message)
-            null
-        }
-    }
+    //TODO: add necessary parameters for priority, retry and etc
+
 }
+
+const val BODY_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8"
+
+const val DEFAULT_CHARSET = "UTF-8"

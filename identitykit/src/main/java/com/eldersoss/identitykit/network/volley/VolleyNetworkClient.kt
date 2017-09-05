@@ -30,7 +30,7 @@ class VolleyNetworkClient(val context: Context) : NetworkClient {
             "PATCH" -> 7
             else -> -1
         }
-        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.getBodyBytes(), callback)
+        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.body, callback)
         requestQueue?.add(volleyRequest)
     }
 
