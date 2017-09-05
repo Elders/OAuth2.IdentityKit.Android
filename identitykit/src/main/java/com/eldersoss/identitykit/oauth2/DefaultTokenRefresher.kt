@@ -23,7 +23,7 @@ import com.eldersoss.identitykit.network.NetworkRequest
 import java.nio.charset.Charset
 
 /**
- * Created by IvanVatov on 8/30/2017.
+ * Default implementation
  */
 class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: NetworkClient, val authorizer: Authorizer) : TokenRefresher {
 
@@ -35,20 +35,20 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
         }
 
         val request = NetworkRequest("POST", tokenEndPoint, HashMap(), body.toByteArray(Charset.defaultCharset()))
-        authorizer.authorize(request, { networkRequest, error ->
+        authorizer.authorize(request, { networkRequest, _ ->
             // Execute request
-            when { networkRequest != null -> networkClient.execute(networkRequest, { networkResponse ->
+            networkClient.execute(networkRequest, { networkResponse ->
                 //Parse Token from network response
                 if (networkResponse.getJson() != null && networkResponse.statusCode in 200..299) {
-                    var jsonObject = networkResponse.getJson()
+                    val jsonObject = networkResponse.getJson()
                     val accessToken = jsonObject?.optString("access_token", null)
                     val tokenType = jsonObject?.optString("token_type", null)
                     val expiresIn = jsonObject?.optLong("expires_in", 0L)
-                    val refreshToken = jsonObject?.optString("refresh_token", null)
-                    val scope = jsonObject?.optString("scope", null)
+                    val refrToken = jsonObject?.optString("refresh_token", null)
+                    val tokenScope = jsonObject?.optString("scope", null)
                     if (accessToken != null && tokenType != null && expiresIn != null) {
                         // if response is valid token return it to callback
-                        callback(Token(accessToken, tokenType, expiresIn, refreshToken, scope), null)
+                        callback(Token(accessToken, tokenType, expiresIn, refrToken, tokenScope), null)
                     }
                 } else if (networkResponse.statusCode in 400..499) {
                     callback(null, OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error")))
@@ -57,8 +57,6 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
                 }
 
             })
-            }
         })
-
     }
 }

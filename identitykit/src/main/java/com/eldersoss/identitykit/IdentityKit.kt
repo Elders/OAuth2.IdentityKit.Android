@@ -48,9 +48,11 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
             )
 
     private val queue = ArrayDeque<RequestHandler>()
+
     private data class RequestHandler(val request: NetworkRequest, val callback: (NetworkRequest, Error?) -> Unit)
 
-    @Volatile /** This property is thread safe */
+    @Volatile
+    /** This property is thread safe */
     private var isRefreshing = false
 
     private var token: Token? = null
@@ -62,7 +64,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * Possible case callback can return NetworkResponse with Error
      */
     fun authorizeAndExecute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
-        authorize(request, { authorizedRequest, error ->
+        authorize(request, { authorizedRequest, _ ->
             client.execute(authorizedRequest, { networkResponse ->
                 callback(networkResponse)
             })
@@ -113,34 +115,32 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
             queue.add(requestHandler)
         }
         if (!isRefreshing) {
-            if (refreshToken != null) {
-                isRefreshing = true
-                refresher.refresh(refreshToken!!, token?.scope, { token, tokenError ->
-                    run {
-                        isRefreshing = false
-                        if (tokenError != null) {
-                            callback(request, tokenError)
-                            if (OAuth2Error.invalid_grant == tokenError) {
-                                storage?.delete(REFRESH_TOKEN)
-                                useCredentials(request, callback)
-                            }
-                            return@run
+            isRefreshing = true
+            refresher.refresh(refreshToken, token?.scope, { token, tokenError ->
+                run {
+                    isRefreshing = false
+                    if (tokenError != null) {
+                        callback(request, tokenError)
+                        if (OAuth2Error.invalid_grant == tokenError) {
+                            storage?.delete(REFRESH_TOKEN)
+                            useCredentials(request, callback)
                         }
-                        if (token != null) {
-                            if (token.refreshToken != null) {
-                                storage?.write(REFRESH_TOKEN, token.refreshToken)
-                                this.token = token
-                            }
-                            authorizeQueue()
-                        }
+                        return@run
                     }
-                })
-            }
+                    if (token != null) {
+                        if (token.refreshToken != null) {
+                            storage?.write(REFRESH_TOKEN, token.refreshToken)
+                            this.token = token
+                        }
+                        authorizeQueue()
+                    }
+                }
+            })
         }
     }
 
     /** Use the given flow to obtain access token */
-    private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit){
+    private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         val requestHandler = RequestHandler(request, callback)
         synchronized(queue) {
             queue.add(requestHandler)
@@ -179,7 +179,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         //Parse Token from network response
         if (networkResponse.getJson() != null) {
             if (networkResponse.statusCode in 200..299) {
-                var jsonObject = networkResponse.getJson()
+                val jsonObject = networkResponse.getJson()
                 val accessToken = jsonObject?.optString("access_token", null)
                 val tokenType = jsonObject?.optString("token_type", null)
                 val expiresIn = jsonObject?.optLong("expires_in", 0L)
