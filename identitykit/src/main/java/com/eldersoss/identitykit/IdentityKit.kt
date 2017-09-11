@@ -16,6 +16,7 @@
 
 package com.eldersoss.identitykit
 
+import android.os.AsyncTask
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
 import com.eldersoss.identitykit.network.NetworkClient
@@ -28,7 +29,6 @@ import com.eldersoss.identitykit.oauth2.TokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import com.eldersoss.identitykit.storage.TokenStorage
-import java.util.*
 
 /**
  * @property flow - Desired Oauth2 flow
@@ -38,7 +38,7 @@ import java.util.*
  * @property client Network client with ability to execute NetworkRequest
  * @constructor - the primary constructor is not used currently
  */
-class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (Token) -> Authorizer, val refresher: TokenRefresher, val storage: TokenStorage?, val client: NetworkClient) {
+class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (Token) -> Authorizer, val refresher: TokenRefresher?, val storage: TokenStorage?, val client: NetworkClient) {
     /**
      * Constructor that take BearerAuthorizer.Method
      */
@@ -47,15 +47,9 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                     flow, { token -> BearerAuthorizer(tokenAuthorizationMethod, token) }, refresher, storage, client
             )
 
-    private val queue = ArrayDeque<RequestHandler>()
-
-    private data class RequestHandler(val request: NetworkRequest, val callback: (NetworkRequest, Error?) -> Unit)
-
-    @Volatile
-    /** This property is thread safe */
-    private var isRefreshing = false
-
     private var token: Token? = null
+
+    private val executor = AsyncTask.SERIAL_EXECUTOR
 
     /**
      * Authotrize and execute the request with provided network client
@@ -63,11 +57,14 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * @param callback callback function that return back NetworkResponse,
      * Possible case callback can return NetworkResponse with Error
      */
+    @Synchronized
     fun authorizeAndExecute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
-        authorize(request, { authorizedRequest, _ ->
-            client.execute(authorizedRequest, { networkResponse ->
-                callback(networkResponse)
-            })
+        authorize(request, { authorizedRequest, error ->
+            if (error == null) {
+                client.execute(authorizedRequest, { networkResponse ->
+                    callback(networkResponse)
+                })
+            }
         })
     }
 
@@ -77,8 +74,34 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * @param callback callback function that return back authorized request,
      * Possible case callback can return unauthorized request and Error
      */
+    @Synchronized
     fun authorize(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        if (token != null) {
+        val runnable = Runnable {
+            synchronized(lock) {
+                authorizeOrRefresh(request, callback)
+            }
+        }
+        executor.execute(runnable)
+    }
+
+    /**
+     * Just execute network request request
+     * @param request network request
+     * @param callback callback function that return back NetworkResponse,
+     * Possible case callback can return NetworkResponse with Error
+     */
+    @Synchronized
+    fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
+        client.execute(request, { networkResponse ->
+            callback(networkResponse)
+        })
+    }
+
+    /**
+     * Perform internal logic to authorize the request
+     */
+    private fun authorizeOrRefresh(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
+        if (token != null && token?.expiresIn != null) {
             // We have valid token
             if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
                 tokenAuthorizationProvider(token!!).authorize(request, callback)
@@ -87,91 +110,65 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         }
         // we have refresh token stored
         val refreshToken = storage?.read(REFRESH_TOKEN)
-        if (refreshToken != null) {
+        if (refreshToken != null && refresher != null) {
             refreshToken(refreshToken, request, callback)
+            lock.wait()
+            tokenAuthorizationProvider(token!!).authorize(request, callback)
             return
         }
-
         // we have nothing - request and use credentials
         useCredentials(request, callback)
-    }
-
-    /** Authorize network requests in the queue */
-    private fun authorizeQueue() {
-        if (token != null) {
-            synchronized(queue) {
-                while (queue.isNotEmpty()) {
-                    val requestHandler = queue.poll()
-                    tokenAuthorizationProvider(token!!).authorize(requestHandler.request, requestHandler.callback)
-                }
-            }
-        }
+        lock.wait()
+        tokenAuthorizationProvider(token!!).authorize(request, callback)
     }
 
     /** Refresh access token and authorize queue */
     private fun refreshToken(refreshToken: String, request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        val requestHandler = RequestHandler(request, callback)
-        synchronized(queue) {
-            queue.add(requestHandler)
-        }
-        if (!isRefreshing) {
-            isRefreshing = true
-            refresher.refresh(refreshToken, token?.scope, { token, tokenError ->
-                run {
-                    isRefreshing = false
-                    if (tokenError != null) {
-                        callback(request, tokenError)
-                        if (OAuth2Error.invalid_grant == tokenError) {
-                            storage?.delete(REFRESH_TOKEN)
-                            useCredentials(request, callback)
-                        }
-                        return@run
-                    }
-                    if (token != null) {
-                        if (token.refreshToken != null) {
-                            storage?.write(REFRESH_TOKEN, token.refreshToken)
-                            this.token = token
-                        }
-                        authorizeQueue()
+        refresher?.refresh(refreshToken, token?.scope, { token, tokenError ->
+            synchronized(lock) {
+                if (tokenError != null) {
+                    callback(request, tokenError)
+                    if (OAuth2Error.invalid_grant == tokenError) {
+                        storage?.delete(REFRESH_TOKEN)
+                        useCredentials(request, callback)
                     }
                 }
-            })
-        }
+                if (token != null) {
+                    if (token.refreshToken != null) {
+                        storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
+                        this.token = token
+                    }
+                    lock.notify()
+                }
+            }
+        })
     }
+
 
     /** Use the given flow to obtain access token */
     private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        val requestHandler = RequestHandler(request, callback)
-        synchronized(queue) {
-            queue.add(requestHandler)
-        }
-        if (!isRefreshing) {
-            isRefreshing = true
-            flow.authenticate({ networkResponse ->
-                run {
-                    isRefreshing = false
-                    token = parseToken(networkResponse)
-                    if (token != null) {
-                        if (token?.refreshToken != null) {
-                            storage?.write(REFRESH_TOKEN, token?.refreshToken!!)
+        flow.authenticate({ networkResponse ->
+            synchronized(lock) {
+                token = parseToken(networkResponse)
+                if (token != null) {
+                    if (token?.refreshToken != null) {
+                        storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
+                    }
+                    lock.notify()
+                } else {
+                    if (networkResponse.getJson() != null) {
+                        val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
+                        networkResponse.error = error
+                        callback(request, networkResponse.error)
+                        if (OAuth2Error.invalid_grant == error) {
+                            useCredentials(request, callback)
                         }
-                        authorizeQueue()
                     } else {
-                        if (networkResponse.statusCode in 400..499) {
-                            networkResponse.error
-                            val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
-                            networkResponse.error = error
-                            callback(request, networkResponse.error)
-                            if (OAuth2Error.invalid_grant == error) {
-                                useCredentials(request, callback)
-                            }
-                        } else {
-                            callback(request, networkResponse.error)
-                        }
+                        callback(request, networkResponse.error)
                     }
                 }
-            })
-        }
+            }
+        })
     }
 
     /** Parse Token object from network response this can return null */
@@ -194,3 +191,5 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         return null
     }
 }
+
+private val lock = java.lang.Object()
