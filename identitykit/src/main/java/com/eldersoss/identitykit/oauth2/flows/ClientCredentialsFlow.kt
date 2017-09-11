@@ -22,6 +22,7 @@ import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
+import com.eldersoss.identitykit.oauth2.OAuth2Error
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">Client Credentials Grant</a>
@@ -39,6 +40,19 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
     override fun authenticate(callback: (NetworkResponse) -> Unit) {
         val uriScope = Uri.encode(scope)
         val request = NetworkRequest("POST", tokenEndPoint, HashMap(), "grant_type=client_credentials&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
-        authorizeAndPerform(request, authorizer, networkClient, callback)
+        authorizeAndPerform(request, authorizer, networkClient,
+                // validate response
+                { networkResponse -> validateResponse(networkResponse, callback) })
+    }
+
+    private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit){
+        if (networkResponse.getJson() != null) {
+            val jsonObject = networkResponse.getJson()
+            val refreshToken = jsonObject?.optString("refresh_token", null)
+            if (refreshToken != null){
+                networkResponse.error = OAuth2Error.invalid_token_response
+            }
+        }
+        callback(networkResponse)
     }
 }
