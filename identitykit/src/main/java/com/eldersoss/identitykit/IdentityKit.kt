@@ -38,7 +38,7 @@ import com.eldersoss.identitykit.storage.TokenStorage
  * @property client Network client with ability to execute NetworkRequest
  * @constructor - the primary constructor is not used currently
  */
-class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (Token) -> Authorizer, val refresher: TokenRefresher, val storage: TokenStorage?, val client: NetworkClient) {
+class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (Token) -> Authorizer, val refresher: TokenRefresher?, val storage: TokenStorage?, val client: NetworkClient) {
     /**
      * Constructor that take BearerAuthorizer.Method
      */
@@ -57,11 +57,14 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * @param callback callback function that return back NetworkResponse,
      * Possible case callback can return NetworkResponse with Error
      */
-    @Synchronized fun authorizeAndExecute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
-        authorize(request, { authorizedRequest, _ ->
-            client.execute(authorizedRequest, { networkResponse ->
-                callback(networkResponse)
-            })
+    @Synchronized
+    fun authorizeAndExecute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
+        authorize(request, { authorizedRequest, error ->
+            if (error == null) {
+                client.execute(authorizedRequest, { networkResponse ->
+                    callback(networkResponse)
+                })
+            }
         })
     }
 
@@ -71,38 +74,57 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * @param callback callback function that return back authorized request,
      * Possible case callback can return unauthorized request and Error
      */
-    @Synchronized fun authorize(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
+    @Synchronized
+    fun authorize(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         val runnable = Runnable {
             synchronized(lock) {
-                kotlin.run {
-                    if (token != null) {
-                        // We have valid token
-                        if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
-                            tokenAuthorizationProvider(token!!).authorize(request, callback)
-                            return@run
-                        }
-                    }
-                    // we have refresh token stored
-                    val refreshToken = storage?.read(REFRESH_TOKEN)
-                    if (refreshToken != null) {
-                        refreshToken(refreshToken, request, callback)
-                        lock.wait()
-                        tokenAuthorizationProvider(token!!).authorize(request, callback)
-                        return@run
-                    }
-                    // we have nothing - request and use credentials
-                    useCredentials(request, callback)
-                    lock.wait()
-                    tokenAuthorizationProvider(token!!).authorize(request, callback)
-                }
+                authorizeOrRefresh(request, callback)
             }
         }
         executor.execute(runnable)
     }
 
+    /**
+     * Just execute network request request
+     * @param request network request
+     * @param callback callback function that return back NetworkResponse,
+     * Possible case callback can return NetworkResponse with Error
+     */
+    @Synchronized
+    fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
+        client.execute(request, { networkResponse ->
+            callback(networkResponse)
+        })
+    }
+
+    /**
+     * Perform internal logic to authorize the request
+     */
+    private fun authorizeOrRefresh(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
+        if (token != null && token?.expiresIn != null) {
+            // We have valid token
+            if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
+                tokenAuthorizationProvider(token!!).authorize(request, callback)
+                return
+            }
+        }
+        // we have refresh token stored
+        val refreshToken = storage?.read(REFRESH_TOKEN)
+        if (refreshToken != null && refresher != null) {
+            refreshToken(refreshToken, request, callback)
+            lock.wait()
+            tokenAuthorizationProvider(token!!).authorize(request, callback)
+            return
+        }
+        // we have nothing - request and use credentials
+        useCredentials(request, callback)
+        lock.wait()
+        tokenAuthorizationProvider(token!!).authorize(request, callback)
+    }
+
     /** Refresh access token and authorize queue */
     private fun refreshToken(refreshToken: String, request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        refresher.refresh(refreshToken, token?.scope, { token, tokenError ->
+        refresher?.refresh(refreshToken, token?.scope, { token, tokenError ->
             synchronized(lock) {
                 if (tokenError != null) {
                     callback(request, tokenError)
@@ -113,7 +135,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 }
                 if (token != null) {
                     if (token.refreshToken != null) {
-                        storage?.write(REFRESH_TOKEN, token.refreshToken)
+                        storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
                         this.token = token
                     }
                     lock.notify()
@@ -130,12 +152,11 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 token = parseToken(networkResponse)
                 if (token != null) {
                     if (token?.refreshToken != null) {
-                        storage?.write(REFRESH_TOKEN, token?.refreshToken!!)
+                        storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
                     }
                     lock.notify()
                 } else {
-                    if (networkResponse.statusCode in 400..499) {
-                        networkResponse.error
+                    if (networkResponse.getJson() != null) {
                         val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
                         networkResponse.error = error
                         callback(request, networkResponse.error)
