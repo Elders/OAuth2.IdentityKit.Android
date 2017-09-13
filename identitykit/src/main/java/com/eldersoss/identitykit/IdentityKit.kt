@@ -97,6 +97,52 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         })
     }
 
+    fun getValidToken(callback: (Token) -> Unit) {
+        val runnable = Runnable {
+            synchronized(lock) {
+                val refreshToken = storage?.read(REFRESH_TOKEN)
+                if (token != null && token?.expiresIn != null) {
+                    // We have valid token
+                    if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
+                        callback(token!!)
+                    }
+                }
+                // we have refresh token stored
+                else if (refreshToken != null && refresher != null) {
+                    refresher?.refresh(refreshToken, token?.scope, { token, _ ->
+                        synchronized(lock) {
+                            if (token != null) {
+                                if (token.refreshToken != null) {
+                                    storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
+                                }
+                                this.token = token
+                                callback(token)
+                                lock.notify()
+                            }
+                        }
+                    })
+                    lock.wait()
+                } else {
+                    flow.authenticate({ networkResponse ->
+                        synchronized(lock) {
+                            token = parseToken(networkResponse)
+                            if (token != null) {
+                                if (token?.refreshToken != null) {
+                                    storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
+                                }
+                                this.token = token
+                                callback(token!!)
+                                lock.notify()
+                            }
+                        }
+                    })
+                    lock.wait()
+                }
+            }
+        }
+        executor.execute(runnable)
+    }
+
     /**
      * Perform internal logic to authorize the request
      */
@@ -179,7 +225,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 val jsonObject = networkResponse.getJson()
                 val accessToken = jsonObject?.optString("access_token", null)
                 val tokenType = jsonObject?.optString("token_type", null)
-                val expiresIn = jsonObject?.optLong("expires_in", 0L)
+                val expiresIn = (System.currentTimeMillis() / 1000) + jsonObject!!.optLong("expires_in", 0L)
                 val refreshToken = jsonObject?.optString("refresh_token", null)
                 val scope = jsonObject?.optString("scope", null)
                 if (accessToken != null && tokenType != null && expiresIn != null) {
