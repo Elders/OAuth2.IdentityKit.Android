@@ -97,29 +97,35 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         })
     }
 
-    fun getValidToken(callback: (Token) -> Unit) {
+    fun getValidToken(callback: (Token?, Error?) -> Unit) {
         val runnable = Runnable {
             synchronized(lock) {
                 val refreshToken = storage?.read(REFRESH_TOKEN)
                 if (token != null && token?.expiresIn != null) {
                     // We have valid token
                     if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
-                        callback(token!!)
+                        callback(token!!, null)
                     }
                 }
                 // we have refresh token stored
                 else if (refreshToken != null && refresher != null) {
-                    refresher?.refresh(refreshToken, token?.scope, { token, _ ->
+                    refresher?.refresh(refreshToken, token?.scope, { token, error ->
                         synchronized(lock) {
                             if (token != null) {
                                 if (token.refreshToken != null) {
                                     storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
                                 }
                                 this.token = token
-                                callback(token)
-                                lock.notify()
+                                callback(token!!, null)
+                            } else {
+                                if (error == OAuth2Error.invalid_grant) {
+                                    storage?.let { storage.delete(REFRESH_TOKEN) }
+                                }
+                                this.token = null
+                                callback(null, error)
                             }
                         }
+                        lock.notify()
                     })
                     lock.wait()
                 } else {
@@ -131,9 +137,12 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                                     storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
                                 }
                                 this.token = token
-                                callback(token!!)
-                                lock.notify()
+                                callback(token!!, null)
+                            } else {
+                                this.token = null
+                                callback(null, networkResponse.error)
                             }
+                            lock.notify()
                         }
                     })
                     lock.wait()
@@ -175,7 +184,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 if (tokenError != null) {
                     callback(request, tokenError)
                     if (OAuth2Error.invalid_grant == tokenError) {
-                        storage?.delete(REFRESH_TOKEN)
+                        storage?.let {storage.delete(REFRESH_TOKEN)}
                         useCredentials(request, callback)
                     }
                 }
