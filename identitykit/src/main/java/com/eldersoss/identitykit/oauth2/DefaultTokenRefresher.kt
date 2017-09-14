@@ -43,7 +43,7 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
                     val jsonObject = networkResponse.getJson()
                     val accessToken = jsonObject?.optString("access_token", null)
                     val tokenType = jsonObject?.optString("token_type", null)
-                    val expiresIn = jsonObject?.optLong("expires_in", 0L)
+                    val expiresIn = (System.currentTimeMillis() / 1000) + jsonObject!!.optLong("expires_in", 0L)
                     val refrToken = jsonObject?.optString("refresh_token", null)
                     val tokenScope = jsonObject?.optString("scope", null)
                     if (accessToken != null && tokenType != null && expiresIn != null) {
