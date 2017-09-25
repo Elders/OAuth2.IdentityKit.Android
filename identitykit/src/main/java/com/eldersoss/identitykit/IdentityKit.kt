@@ -16,7 +16,6 @@
 
 package com.eldersoss.identitykit
 
-import android.os.AsyncTask
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
 import com.eldersoss.identitykit.network.NetworkClient
@@ -47,9 +46,12 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                     flow, { token -> BearerAuthorizer(tokenAuthorizationMethod, token) }, refresher, storage, client
             )
 
+
     private var token: Token? = null
 
-    private val executor = AsyncTask.SERIAL_EXECUTOR
+    private val executor = SerialTaskExecutor()
+
+    private val lock = java.lang.Object()
 
     /**
      * Authotrize and execute the request with provided network client
@@ -256,5 +258,3 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         return null
     }
 }
-
-private val lock = java.lang.Object()
