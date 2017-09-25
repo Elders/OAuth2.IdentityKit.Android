@@ -97,6 +97,16 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         })
     }
 
+    @Synchronized
+    fun revokeAuthentication(){
+        val runnable = Runnable {
+            storage?.let { storage.delete(REFRESH_TOKEN) }
+            this.token = null
+        }
+        executor.execute(runnable)
+    }
+
+    @Synchronized
     fun getValidToken(callback: (Token?, Error?) -> Unit) {
         val runnable = Runnable {
             synchronized(lock) {
@@ -124,8 +134,8 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                                 this.token = null
                                 callback(null, error)
                             }
+                            lock.notify()
                         }
-                        lock.notify()
                     })
                     lock.wait()
                 } else {
