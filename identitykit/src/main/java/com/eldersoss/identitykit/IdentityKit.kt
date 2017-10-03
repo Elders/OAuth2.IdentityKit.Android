@@ -41,7 +41,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
     /**
      * Constructor that take BearerAuthorizer.Method
      */
-    constructor(flow: AuthorizationFlow, tokenAuthorizationMethod: BearerAuthorizer.Method, refresher: TokenRefresher, storage: TokenStorage?, client: NetworkClient) :
+    constructor(flow: AuthorizationFlow, tokenAuthorizationMethod: BearerAuthorizer.Method, refresher: TokenRefresher?, storage: TokenStorage?, client: NetworkClient) :
             this(
                     flow, { token -> BearerAuthorizer(tokenAuthorizationMethod, token) }, refresher, storage, client
             )
