@@ -1,6 +1,7 @@
 package com.eldersoss.identitykit.network.volley
 
 import android.content.Context
+import com.android.volley.DefaultRetryPolicy
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.Volley
@@ -31,6 +32,7 @@ class VolleyNetworkClient(val context: Context) : NetworkClient {
             else -> -1
         }
         val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.body, callback)
+        volleyRequest.retryPolicy = DefaultRetryPolicy(30000, 1, 1f)
         requestQueue?.add(volleyRequest)
     }
 
