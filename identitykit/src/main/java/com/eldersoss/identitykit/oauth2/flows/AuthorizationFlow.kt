@@ -20,6 +20,7 @@ import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
+import com.eldersoss.identitykit.oauth2.OAuth2Error
 
 /**
  * Created by IvanVatov on 8/17/2017.
@@ -35,7 +36,13 @@ fun authorizeAndPerform(request: NetworkRequest, authorizer: Authorizer, network
     authorizer.authorize(request, { networkRequest: NetworkRequest, error ->
         if (error == null) {
             networkClient.execute(networkRequest, { networkResponse ->
-                callback(networkResponse)
+                if (networkResponse.statusCode in 400..499) {
+                    var errorResponse = NetworkResponse()
+                    errorResponse.error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
+                    callback(errorResponse)
+                } else {
+                    callback(networkResponse)
+                }
             })
         } else {
             var errorResponse = NetworkResponse()

@@ -113,11 +113,9 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         val runnable = Runnable {
             synchronized(lock) {
                 val refreshToken = storage?.read(REFRESH_TOKEN)
-                if (token != null && token?.expiresIn != null) {
+                if (token != null && token?.expiresIn != null && token?.expiresIn!! > System.currentTimeMillis() / 1000) {
                     // We have valid token
-                    if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
-                        callback(token!!, null)
-                    }
+                    callback(token!!, null)
                 }
                 // we have refresh token stored
                 else if (refreshToken != null && refresher != null) {
