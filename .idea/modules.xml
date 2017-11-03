@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/OAuth2.IdentityKit.Android.iml" filepath="$PROJECT_DIR$/OAuth2.IdentityKit.Android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/identitykit/identitykit.iml" filepath="$PROJECT_DIR$/identitykit/identitykit.iml" />
+    </modules>
+  </component>
+</project>
