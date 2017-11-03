@@ -213,7 +213,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
     /** Use the given flow to obtain access token */
     private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         flow.authenticate({ networkResponse ->
-            synchronized(lock) {
+            //synchronized(lock) {
                 token = parseToken(networkResponse)
                 if (token != null) {
                     if (token?.refreshToken != null) {
@@ -232,7 +232,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                         callback(request, networkResponse.error)
                     }
                 }
-            }
+            //}
         })
     }
 
