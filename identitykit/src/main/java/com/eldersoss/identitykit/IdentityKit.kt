@@ -100,7 +100,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
     }
 
     @Synchronized
-    fun revokeAuthentication(){
+    fun revokeAuthentication() {
         val runnable = Runnable {
             storage?.let { storage.delete(REFRESH_TOKEN) }
             this.token = null
@@ -194,7 +194,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 if (tokenError != null) {
                     callback(request, tokenError)
                     if (OAuth2Error.invalid_grant == tokenError) {
-                        storage?.let {storage.delete(REFRESH_TOKEN)}
+                        storage?.let { storage.delete(REFRESH_TOKEN) }
                         useCredentials(request, callback)
                     }
                 }
@@ -213,26 +213,24 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
     /** Use the given flow to obtain access token */
     private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         flow.authenticate({ networkResponse ->
-            //synchronized(lock) {
-                token = parseToken(networkResponse)
-                if (token != null) {
-                    if (token?.refreshToken != null) {
-                        storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
-                    }
-                    lock.notify()
-                } else {
-                    if (networkResponse.getJson() != null) {
-                        val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
-                        networkResponse.error = error
-                        callback(request, networkResponse.error)
-                        if (OAuth2Error.invalid_grant == error) {
-                            useCredentials(request, callback)
-                        }
-                    } else {
-                        callback(request, networkResponse.error)
-                    }
+            token = parseToken(networkResponse)
+            if (token != null) {
+                if (token?.refreshToken != null) {
+                    storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
                 }
-            //}
+                lock.notify()
+            } else {
+                if (networkResponse.getJson() != null) {
+                    val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
+                    networkResponse.error = error
+                    callback(request, networkResponse.error)
+                    if (OAuth2Error.invalid_grant == error) {
+                        useCredentials(request, callback)
+                    }
+                } else {
+                    callback(request, networkResponse.error)
+                }
+            }
         })
     }
 
