@@ -39,7 +39,7 @@ class TestAsyncCode {
         }
     }
 
-    private fun testAsyncCode(waitTime: Long, closure: (completion: () -> Unit) -> Unit){
+    fun testAsyncCode(waitTime: Long, closure: (completion: () -> Unit) -> Unit){
 
         val lock = java.lang.Object()
 

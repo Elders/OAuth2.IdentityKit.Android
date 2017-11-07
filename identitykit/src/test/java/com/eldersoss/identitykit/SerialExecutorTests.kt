@@ -41,55 +41,6 @@ class SerialExecutorTests {
         assertTrue(result.contentEquals(expected))
     }
 
-    @Test
-    fun asd() {
-
-        //println("1")
-        this.testAsyncCode(2000) { completion ->
-
-            //println("3")
-            this.performNetworkRequest(1, 5) {
-
-                //println("4")
-                completion()
-            }
-        }
-
-        //println("2")
-        this.testAsyncCode(2000) { completion ->
-
-            //println("5")
-            this.performNetworkRequest(1, 1) {
-
-                //println("6")
-                completion()
-            }
-        }
-    }
-
-    private fun testAsyncCode(waitTime: Long, closure: (completion: () -> Unit) -> Unit){
-
-        val lock = java.lang.Object()
-
-        val thread = Thread {
-
-            closure {
-
-                synchronized(lock) {
-
-                    lock.notify()
-                }
-            }
-        }
-
-        thread.start()
-
-        synchronized(lock) {
-
-            lock.wait(waitTime)
-        }
-    }
-
     private fun execute(op: Int, time: Int) {
 
         val runnable = Runnable {

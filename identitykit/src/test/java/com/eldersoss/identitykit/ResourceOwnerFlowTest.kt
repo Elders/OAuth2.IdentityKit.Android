@@ -46,7 +46,7 @@ class ResourceOwnerFlowTest {
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
         val handler = TestResultHandler()
 
-        val workerThread = Thread {
+        TestAsyncCode().testAsyncCode(2000) { completion ->
             val kit: IdentityKit
             val networkClient: NetworkClient
             networkClient = TestNetworkClient()
@@ -59,25 +59,19 @@ class ResourceOwnerFlowTest {
             val request = NetworkRequest("GET", "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
             kit.authorize(request) { networkRequest, error ->
                 handler.value = networkRequest.headers["Authorization"]
+                completion()
                 null
             }
-
-            synchronized(mainLock) {
-                mainLock.wait(1000)
-            }
         }
-        workerThread.start()
-        workerThread.join()
 
         assertTrue(handler.value.equals(responseAuthorization))
-
     }
 
     @Test
     fun invalidGrandTest() {
         val handler = TestResultHandler()
 
-        val workerThread = Thread {
+        TestAsyncCode().testAsyncCode(2000) { completion ->
             val kit: IdentityKit
             val networkClient: NetworkClient
             networkClient = TestNetworkClient()
@@ -91,14 +85,11 @@ class ResourceOwnerFlowTest {
             val request = NetworkRequest("GET", "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
             kit.authorize(request) { networkRequest, error ->
                 handler.error = error
+                completion()
                 null
             }
-            synchronized(mainLock) {
-                mainLock.wait(1000)
-            }
         }
-        workerThread.start()
-        workerThread.join()
+
         assertTrue(handler.error == OAuth2Error.invalid_grant)
     }
 
@@ -106,7 +97,7 @@ class ResourceOwnerFlowTest {
     fun refreshToken() {
         val handler = TestResultHandler()
 
-        val workerThread = Thread {
+        TestAsyncCode().testAsyncCode(2000) { completion ->
             val kit: IdentityKit
             val networkClient: NetworkClient
             val tokenStorage = TestTokenStorage()
@@ -122,14 +113,11 @@ class ResourceOwnerFlowTest {
             val request = NetworkRequest("GET", "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
             kit.authorize(request) { networkRequest, error ->
                 handler.value = networkRequest.headers["Authorization"]
+                completion()
                 null
             }
-            synchronized(mainLock) {
-                mainLock.wait(1000)
-            }
+
         }
-        workerThread.start()
-        workerThread.join()
         val responseAuthorization = "Bearer TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"
         assertTrue(handler.value.equals(responseAuthorization))
     }

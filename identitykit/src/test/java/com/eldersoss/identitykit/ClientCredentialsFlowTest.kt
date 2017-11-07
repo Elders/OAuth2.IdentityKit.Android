@@ -69,7 +69,7 @@ class ClientCredentialsFlowTest {
         workerThread.join()
 
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
-        assertTrue(handler.value.equals(responseAuthorization, ignoreCase = true))
+        assertTrue(handler.value.equals(responseAuthorization))
     }
 
     @Test
