@@ -32,7 +32,7 @@ class SerialExecutorTests {
             execute(10, 4)
 
             synchronized(mainLock) {
-                mainLock.wait(2000)
+                mainLock.wait(2200)
             }
         }
         workerThread.start()
