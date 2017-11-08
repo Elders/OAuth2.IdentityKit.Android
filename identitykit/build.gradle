@@ -36,8 +36,8 @@ tasks.withType(Javadoc) {
     enabled = false
 }
 
-// This task deploys the library to Bintray, requires bintray.cfg file in root directory of the project.
-// ========================  bintray.cfg  ================================
+// This task deploys the library to Bintray, requires local.properties file in root directory of the project.
+// ========================  add to local.properties  ================================
 // bintray.user=<your bintray username>
 // bintray.apikey=<your bintray api key>
 task bintrayDeploy {
