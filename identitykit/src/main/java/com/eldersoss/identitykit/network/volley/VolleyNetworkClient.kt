@@ -12,7 +12,7 @@ import com.eldersoss.identitykit.network.NetworkResponse
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyNetworkClient(val context: Context) : NetworkClient {
+class VolleyNetworkClient(val context: Context, val headers: HashMap<String, String>?) : NetworkClient {
 
     init {
         getRequestQueue()
@@ -31,7 +31,11 @@ class VolleyNetworkClient(val context: Context) : NetworkClient {
             "PATCH" -> 7
             else -> -1
         }
-        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), request.headers, request.body, callback)
+        var mergedHeaders = request.headers
+        if (headers != null) {
+            mergedHeaders.putAll(headers)
+        }
+        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), mergedHeaders, request.body, callback)
         volleyRequest.retryPolicy = DefaultRetryPolicy(30000, 1, 1f)
         requestQueue?.add(volleyRequest)
     }

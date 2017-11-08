@@ -1,11 +1,14 @@
 package com.eldersoss.identitykit;
 
 import android.os.Handler;
+import android.os.Looper;
 
 import com.eldersoss.identitykit.network.NetworkClient;
 import com.eldersoss.identitykit.network.NetworkRequest;
 import com.eldersoss.identitykit.network.NetworkResponse;
 import com.eldersoss.identitykit.network.volley.VolleyNetworkError;
+
+import org.apache.tools.ant.taskdefs.Sleep;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
@@ -23,21 +26,25 @@ import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET
 
 public class TestNetworkClient implements NetworkClient {
 
-    private ResponseCase responseCase;
+    private ResponseCase responseCase = ResponseCase.NONE;
 
     enum ResponseCase {
         OK200,
         REFRESH200,
         BAD400,
-        NONE;
+        NONE
     }
 
     @Override
     public void execute(final NetworkRequest request, final Function1<? super NetworkResponse, Unit> callback) {
         // case resource owner flow token request
-        new Handler().postDelayed(new Runnable() {
-            @Override
+        Thread thread = new Thread() {
             public void run() {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 String bodyString = "";
                 try {
                     bodyString = new String(request.getBody(), DEFAULT_CHARSET);
@@ -112,7 +119,9 @@ public class TestNetworkClient implements NetworkClient {
                     callback.invoke(internalServerError());
                 }
             }
-        }, 200);
+        };
+        thread.start();
+
     }
 
     public void setCase(ResponseCase responseCase) {
