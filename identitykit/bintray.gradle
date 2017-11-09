@@ -1,28 +1,7 @@
-ext {
-    bintrayRepo = 'OAuth2.IdentityKit.Android'
-    bintrayName = 'OAuth2.IdentityKit.Android'
 
-    publishedGroupId = 'com.eldersoss'
-    libraryName = 'IdentityKit'
-    artifact = 'identitykit'
+apply plugin: 'com.github.dcendents.android-maven'
 
-    libraryDescription = 'OAuth 2 Authentication Library for Android'
-
-    siteUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android'
-    gitUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android.git'
-
-    libraryVersion = '0.6.5'
-
-    developerId = 'ivanvatov'
-    developerName = 'Ivan Vatov'
-    developerEmail = 'ivan.vatov@eldersoss.com'
-
-    licenseName = 'The Apache Software License, Version 2.0'
-    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-    allLicenses = ["Apache-2.0"]
-}
-
-group = publishedGroupId
+group = publishedGroupId                               // Maven Group ID for the artifact
 
 install {
     repositories.mavenInstaller {
@@ -62,6 +41,7 @@ install {
         }
     }
 }
+apply plugin: 'com.jfrog.bintray'
 
 version = libraryVersion
 
@@ -97,7 +77,6 @@ Properties properties = new Properties()
 properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
 bintray {
-
     user = properties.getProperty("bintray.user")
     key = properties.getProperty("bintray.apikey")
 
@@ -114,7 +93,7 @@ bintray {
         version {
             desc = libraryDescription
             gpg {
-                sign = true //Determines whether to GPG sign the files. The default is false
+                sign = false //Determines whether to GPG sign the files. The default is false
                 passphrase = properties.getProperty("bintray.gpg.password")
                 //Optional. The passphrase for GPG signing'
             }
