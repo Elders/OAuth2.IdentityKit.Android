@@ -238,7 +238,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 }
                 callback(request, null)
             } else {
-                if (networkResponse.getJson() != null) {
+                if (networkResponse.statusCode in 400..499 && networkResponse.getJson() != null) {
                     val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
                     networkResponse.error = error
                     callback(request, networkResponse.error)
