@@ -5,18 +5,18 @@ OAuth2 client library for Android
 
 Download
 --------
-[ ![Download](https://api.bintray.com/packages/logix/IdentityKit/IdentityKit/images/download.svg) ](https://bintray.com/logix/IdentityKit/IdentityKit/_latestVersion)
+[ ![Download](https://api.bintray.com/packages/r2d2/OAuth2.IdentityKit.Android/OAuth2.IdentityKit.Android/images/download.svg) ](https://bintray.com/r2d2/OAuth2.IdentityKit.Android/OAuth2.IdentityKit.Android/_latestVersion)
 
 Download via Gradle:
 ```groovy
-compile 'com.eldersoss:identitykit:0.4.0'
+compile 'com.eldersoss:identitykit:0.7.1'
 ```
 or Maven:
 ```xml
 <dependency>
   <groupId>com.eldersoss</groupId>
   <artifactId>identitykit</artifactId>
-  <version>0.4.0</version>
+  <version>0.7.1</version>
   <type>pom</type>
 </dependency>
 ```
