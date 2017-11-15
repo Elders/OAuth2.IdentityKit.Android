@@ -3,6 +3,36 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.github.dcendents.android-maven'
 
+
+// Task bintrayUpload deploys the library to Bintray, requires local.properties file in root directory of the project.
+// ========================  add to local.properties  ================================
+// bintray.user=<your bintray username>
+// bintray.apikey=<your bintray api key>
+
+ext {
+    bintrayRepo = 'OAuth2.IdentityKit.Android'
+    bintrayName = 'OAuth2.IdentityKit.Android'
+
+    publishedGroupId = 'com.eldersoss'
+    libraryName = 'IdentityKit'
+    artifact = 'identitykit'
+
+    libraryDescription = 'OAuth2 client library for Android'
+
+    siteUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android'
+    gitUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android.git'
+
+    libraryVersion = '0.7.0' // Use the same  version as android versionName
+
+    developerId = 'ivanvatov'
+    developerName = 'Ivan Vatov'
+    developerEmail = 'ivan.vatov@eldersoss.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.2"
@@ -10,8 +40,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 18
-        versionName "0.6.5" // Change version in bintray.gradle too
+        versionCode 27
+        versionName "0.7.0" // Change libraryVersion too
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
@@ -36,14 +66,5 @@ tasks.withType(Javadoc) {
     enabled = false
 }
 
-// This task deploys the library to Bintray, requires local.properties file in root directory of the project.
-// ========================  add to local.properties  ================================
-// bintray.user=<your bintray username>
-// bintray.apikey=<your bintray api key>
-task bintrayDeploy {
-    apply from: 'bintray.gradle'
+apply from: 'bintray.gradle'
 
-    doLast {
-        bintrayUpload.execute()
-    }
-}
