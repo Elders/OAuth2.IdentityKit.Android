@@ -41,6 +41,9 @@ class VolleyRequest(var request: NetworkRequest, method: Int, url: String, liste
     }
 
     override fun getBodyContentType(): String {
+        if (headers["Content-Type"] != null){
+            return headers["Content-Type"]!!
+        }
         return "application/x-www-form-urlencoded; charset=$paramsEncoding"
     }
 
