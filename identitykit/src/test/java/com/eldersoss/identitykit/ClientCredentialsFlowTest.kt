@@ -101,7 +101,7 @@ class ClientCredentialsFlowTest {
 
         workerThread.start()
         workerThread.join()
-        assertTrue(handler.error == OAuth2Error.invalid_grant)
+        assertTrue(handler.error == OAuth2Error.INVALID_GRAND)
     }
 
     /**

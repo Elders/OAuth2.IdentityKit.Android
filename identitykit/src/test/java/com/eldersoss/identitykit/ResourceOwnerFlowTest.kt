@@ -90,7 +90,7 @@ class ResourceOwnerFlowTest {
             }
         }
 
-        assertTrue(handler.error == OAuth2Error.invalid_grant)
+        assertTrue(handler.error == OAuth2Error.INVALID_GRAND)
     }
 
     @Test

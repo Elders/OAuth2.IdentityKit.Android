@@ -38,7 +38,7 @@ fun authorizeAndPerform(request: NetworkRequest, authorizer: Authorizer, network
             networkClient.execute(networkRequest, { networkResponse ->
                 if (networkResponse.statusCode in 400..499) {
                     var errorResponse = NetworkResponse()
-                    errorResponse.error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
+                    errorResponse.error = OAuth2Error.get(networkResponse.getJson()?.optString("error"))
                     callback(errorResponse)
                 } else {
                     callback(networkResponse)
