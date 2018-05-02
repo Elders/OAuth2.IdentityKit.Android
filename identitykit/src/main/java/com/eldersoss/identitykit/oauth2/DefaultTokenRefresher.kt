@@ -51,7 +51,7 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
                         callback(Token(accessToken, tokenType, expiresIn, refrToken, tokenScope), null)
                     }
                 } else if (networkResponse.statusCode in 400..499) {
-                    callback(null, OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error")))
+                    callback(null, OAuth2Error.get(networkResponse.getJson()?.optString("error")))
                 } else {
                     callback(null, networkResponse.error)
                 }
