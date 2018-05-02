@@ -22,7 +22,7 @@ ext {
     siteUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android'
     gitUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android.git'
 
-    libraryVersion = '0.7.3' // Use the same  version as android versionName
+    libraryVersion = '0.7.4' // Use the same  version as android versionName
 
     developerId = 'ivanvatov'
     developerName = 'Ivan Vatov'
@@ -40,8 +40,8 @@ android {
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 27
-        versionCode 30
-        versionName "0.7.3" // Change libraryVersion too
+        versionCode 31
+        versionName "0.7.4" // Change libraryVersion too
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
