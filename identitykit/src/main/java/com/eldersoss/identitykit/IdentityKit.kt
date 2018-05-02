@@ -124,7 +124,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                         this.token = token
                         callback(token!!, null)
                     } else {
-                        if (error == OAuth2Error.invalid_grant) {
+                        if (error == OAuth2Error.INVALID_GRAND) {
                             storage?.let { storage.delete(REFRESH_TOKEN) }
                         }
                         this.token = null
@@ -209,7 +209,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
     private fun refreshToken(refreshToken: String, request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         refresher?.refresh(refreshToken, token?.scope, { token, tokenError ->
             if (tokenError != null) {
-                if (OAuth2Error.invalid_grant == tokenError) {
+                if (OAuth2Error.INVALID_GRAND == tokenError) {
                     storage?.let { storage.delete(REFRESH_TOKEN) }
                     useCredentials(request, callback)
                 } else {
@@ -242,7 +242,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                     val error = OAuth2Error.valueOf(networkResponse.getJson()!!.optString("error"))
                     networkResponse.error = error
                     callback(request, networkResponse.error)
-                    if (OAuth2Error.invalid_grant == error) {
+                    if (OAuth2Error.INVALID_GRAND == error) {
                         useCredentials(request, callback)
                     }
                 } else {
