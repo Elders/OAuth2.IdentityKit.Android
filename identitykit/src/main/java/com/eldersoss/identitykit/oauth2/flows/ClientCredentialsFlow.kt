@@ -50,7 +50,7 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
             val jsonObject = networkResponse.getJson()
             val refreshToken = jsonObject?.optString("refresh_token", null)
             if (refreshToken != null){
-                networkResponse.error = OAuth2Error.invalid_token_response
+                networkResponse.error = OAuth2Error.INVALID_TOKEN_RESPONSE
             }
         }
         callback(networkResponse)

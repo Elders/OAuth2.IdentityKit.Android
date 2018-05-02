@@ -20,19 +20,19 @@ package com.eldersoss.identitykit.oauth2
 /**
  * Created by IvanVatov on 8/17/2017.
  */
-enum class OAuth2Error(val errorMessage: String?) : Error{
+enum class OAuth2Error(private val errorMessage: String?) : Error {
     // OAuth2 errors
-    invalid_request("invalid_request"),
-    invalid_client("invalid_client"),
-    invalid_grant("invalid_grant"),
-    unauthorized_client("unauthorized_client"),
-    unsupported_grant_type("unsupported_grant_type"),
-    invalid_scope("invalid_scope"),
-    invalid_token_response("invalid_token_response"),
-    unknown(null);
+    INVALID_REQUEST("invalid_request"),
+    INVALID_CLIENT("invalid_client"),
+    INVALID_GRAND("invalid_grant"),
+    UNAUTHORIZED_CLIENT("unauthorized_client"),
+    UNSUPPORTED_GRANT_TYPE("unsupported_grant_type"),
+    INVALID_SCOPE("invalid_scope"),
+    INVALID_TOKEN_RESPONSE("invalid_token_response"),
+    UNKNOWN(null);
 
-    override fun getMessage(): String{
-        return when(errorMessage) {
+    override fun getMessage(): String {
+        return when (errorMessage) {
         // OAuth2 error messages
             "invalid_request" -> "The request is missing a required parameter"
             "invalid_client" -> "Unknown client, no client authentication included, or unsupported authentication method"
@@ -42,6 +42,22 @@ enum class OAuth2Error(val errorMessage: String?) : Error{
             "invalid_scope" -> "The requested scope is invalid"
             "invalid_token_response" -> "The received access token response is not valid"
             else -> "Unknown error"
+        }
+    }
+
+    companion object {
+        fun get(errorMessage: String?): OAuth2Error {
+            return when (errorMessage) {
+                "invalid_request" -> INVALID_REQUEST
+                "invalid_client" -> INVALID_CLIENT
+                "invalid_grant" -> INVALID_GRAND
+                "unauthorized_client" -> UNAUTHORIZED_CLIENT
+                "unsupported_grant_type" -> UNSUPPORTED_GRANT_TYPE
+                "invalid_scope" -> INVALID_SCOPE
+                "invalid_token_response" -> INVALID_SCOPE
+                "invalid_token_response" -> INVALID_TOKEN_RESPONSE
+                else -> UNKNOWN
+            }
         }
     }
 }
