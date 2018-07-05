@@ -41,7 +41,7 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
     override fun authenticate(callback: (NetworkResponse) -> Unit) {
         credentialsProvider.provideCredentials { username, password ->
             val uriScope = Uri.encode(scope)
-            val request = NetworkRequest("POST", tokenEndPoint, HashMap(), "grant_type=password&username=$username&password=$password&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
+            val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), "grant_type=password&username=$username&password=$password&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
             authorizeAndPerform(request, authorizer, networkClient, callback)
         }
     }
