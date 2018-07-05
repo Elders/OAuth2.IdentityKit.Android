@@ -1,18 +1,15 @@
 package com.eldersoss.identitykit.network.volley
 
-import com.eldersoss.identitykit.oauth2.Error
+import com.eldersoss.identitykit.Error
 
 /**
  * Created by IvanVatov on 9/1/2017.
  */
-enum class VolleyNetworkError(private val errorMessage: String?) : Error {
+enum class VolleyNetworkError : Error {
 
-    server_error("server_error");
+    SERVER_ERROR;
 
-    override fun getMessage(): String{
-        return when(errorMessage) {
-            "server_error" -> "Internal server error"
-            else -> "Unknown error"
-        }
+    override fun getMessage(): String {
+        return "Internal server error"
     }
 }

@@ -19,7 +19,7 @@ package com.eldersoss.identitykit.authorization
 import android.util.Base64
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.oauth2.Error
+import com.eldersoss.identitykit.Error
 
 /**
  * Authorize requests using access token

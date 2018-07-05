@@ -21,7 +21,6 @@ import android.util.Base64;
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BasicAuthorizer;
 import com.eldersoss.identitykit.network.NetworkRequest;
-import com.eldersoss.identitykit.oauth2.Error;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

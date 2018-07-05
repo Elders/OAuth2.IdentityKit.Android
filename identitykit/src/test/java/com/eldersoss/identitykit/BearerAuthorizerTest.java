@@ -19,7 +19,6 @@ package com.eldersoss.identitykit;
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BearerAuthorizer;
 import com.eldersoss.identitykit.network.NetworkRequest;
-import com.eldersoss.identitykit.oauth2.Error;
 import com.eldersoss.identitykit.oauth2.Token;
 
 import org.junit.Test;
@@ -28,7 +27,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 
 import kotlin.Unit;

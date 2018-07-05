@@ -174,7 +174,7 @@ public class TestNetworkClient implements NetworkClient {
 
     NetworkResponse internalServerError() {
         NetworkResponse response = new NetworkResponse();
-        response.setError(VolleyNetworkError.server_error);
+        response.setError(VolleyNetworkError.SERVER_ERROR);
         response.setStatusCode(500);
         Map<String, String> headers = new HashMap();
         putStandartHeaders(headers);

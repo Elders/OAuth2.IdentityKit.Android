@@ -17,7 +17,9 @@
 package com.eldersoss.identitykit.oauth2
 
 import android.net.Uri
+import com.eldersoss.identitykit.Error
 import com.eldersoss.identitykit.authorization.Authorizer
+import com.eldersoss.identitykit.getError
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import java.nio.charset.Charset
@@ -51,7 +53,7 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
                         callback(Token(accessToken, tokenType, expiresIn, refrToken, tokenScope), null)
                     }
                 } else if (networkResponse.statusCode in 400..499) {
-                    callback(null, OAuth2Error.get(networkResponse.getJson()?.optString("error")))
+                    callback(null, getError(networkResponse))
                 } else {
                     callback(null, networkResponse.error)
                 }

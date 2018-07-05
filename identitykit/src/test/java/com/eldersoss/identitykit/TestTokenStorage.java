@@ -1,6 +1,5 @@
 package com.eldersoss.identitykit;
 
-import com.eldersoss.identitykit.oauth2.Token;
 import com.eldersoss.identitykit.storage.TokenStorage;
 
 import org.jetbrains.annotations.Nullable;

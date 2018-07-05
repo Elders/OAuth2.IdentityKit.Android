@@ -22,7 +22,6 @@ import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
 import com.eldersoss.identitykit.oauth2.Token
-import com.eldersoss.identitykit.oauth2.Error
 import com.eldersoss.identitykit.oauth2.OAuth2Error
 import com.eldersoss.identitykit.oauth2.TokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow
@@ -239,10 +238,10 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 callback(request, null)
             } else {
                 if (networkResponse.statusCode in 400..499 && networkResponse.getJson() != null) {
-                    val error = OAuth2Error.get(networkResponse.getJson()?.optString("error"))
+                    val error = getError(networkResponse)
                     networkResponse.error = error
                     callback(request, networkResponse.error)
-                    if (OAuth2Error.INVALID_GRAND == error) {
+                    if (error is OAuth2Error) {
                         useCredentials(request, callback)
                     }
                 } else {

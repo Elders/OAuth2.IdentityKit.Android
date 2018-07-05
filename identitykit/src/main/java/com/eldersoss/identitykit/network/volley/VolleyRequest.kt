@@ -28,7 +28,7 @@ class VolleyRequest(var request: NetworkRequest, method: Int, url: String, liste
         response.data = volleyError.networkResponse?.data
         response.statusCode = volleyError.networkResponse?.statusCode
         response.headers = volleyError.networkResponse?.headers
-        response.error = VolleyNetworkError.server_error
+        response.error = VolleyNetworkError.SERVER_ERROR
         callback(response)
     }
 

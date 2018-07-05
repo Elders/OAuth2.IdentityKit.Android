@@ -16,48 +16,32 @@
 
 package com.eldersoss.identitykit.oauth2
 
+import com.eldersoss.identitykit.Error
+
 
 /**
  * Created by IvanVatov on 8/17/2017.
  */
-enum class OAuth2Error(private val errorMessage: String?) : Error {
+enum class OAuth2Error : Error {
     // OAuth2 errors
-    INVALID_REQUEST("invalid_request"),
-    INVALID_CLIENT("invalid_client"),
-    INVALID_GRAND("invalid_grant"),
-    UNAUTHORIZED_CLIENT("unauthorized_client"),
-    UNSUPPORTED_GRANT_TYPE("unsupported_grant_type"),
-    INVALID_SCOPE("invalid_scope"),
-    INVALID_TOKEN_RESPONSE("invalid_token_response"),
-    UNKNOWN(null);
+    INVALID_REQUEST,
+    INVALID_CLIENT,
+    INVALID_GRAND,
+    UNAUTHORIZED_CLIENT,
+    UNSUPPORTED_GRANT_TYPE,
+    INVALID_SCOPE,
+    INVALID_TOKEN_RESPONSE;
 
     override fun getMessage(): String {
-        return when (errorMessage) {
+        return when (this) {
         // OAuth2 error messages
-            "invalid_request" -> "The request is missing a required parameter"
-            "invalid_client" -> "Unknown client, no client authentication included, or unsupported authentication method"
-            "invalid_grant" -> "The provided authorization grant or refresh token is invalid"
-            "unauthorized_client" -> "The authenticated client is not authorized to use this authorization grant type"
-            "unsupported_grant_type" -> "The authorization grant type is not supported by the authorization server"
-            "invalid_scope" -> "The requested scope is invalid"
-            "invalid_token_response" -> "The received access token response is not valid"
-            else -> "Unknown error"
-        }
-    }
-
-    companion object {
-        fun get(errorMessage: String?): OAuth2Error {
-            return when (errorMessage) {
-                "invalid_request" -> INVALID_REQUEST
-                "invalid_client" -> INVALID_CLIENT
-                "invalid_grant" -> INVALID_GRAND
-                "unauthorized_client" -> UNAUTHORIZED_CLIENT
-                "unsupported_grant_type" -> UNSUPPORTED_GRANT_TYPE
-                "invalid_scope" -> INVALID_SCOPE
-                "invalid_token_response" -> INVALID_SCOPE
-                "invalid_token_response" -> INVALID_TOKEN_RESPONSE
-                else -> UNKNOWN
-            }
+            INVALID_REQUEST -> "The request is missing a required parameter"
+            INVALID_CLIENT -> "Unknown client, no client authentication included, or unsupported authentication method"
+            INVALID_GRAND -> "The provided authorization grant or refresh token is invalid"
+            UNAUTHORIZED_CLIENT -> "The authenticated client is not authorized to use this authorization grant type"
+            UNSUPPORTED_GRANT_TYPE -> "The authorization grant type is not supported by the authorization server"
+            INVALID_SCOPE -> "The requested scope is invalid"
+            INVALID_TOKEN_RESPONSE -> "The received access token response is not valid"
         }
     }
 }
