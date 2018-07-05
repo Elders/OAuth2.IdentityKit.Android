@@ -40,7 +40,7 @@ class DefaultTokenStorage(val context: Context) : TokenStorage {
     }
 
     override fun delete(key: String) {
-        sharedPref.edit().remove(key).commit();
+        sharedPref.edit().remove(key).commit()
     }
 
     override fun write(key: String, value: String) {

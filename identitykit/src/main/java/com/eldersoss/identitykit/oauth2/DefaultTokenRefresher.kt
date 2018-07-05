@@ -35,9 +35,9 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
         }
 
         val request = NetworkRequest("POST", tokenEndPoint, HashMap(), body.toByteArray(Charset.defaultCharset()))
-        authorizer.authorize(request, { networkRequest, _ ->
+        authorizer.authorize(request) { networkRequest, _ ->
             // Execute request
-            networkClient.execute(networkRequest, { networkResponse ->
+            networkClient.execute(networkRequest) { networkResponse ->
                 //Parse Token from network response
                 if (networkResponse.getJson() != null && networkResponse.statusCode in 200..299) {
                     val jsonObject = networkResponse.getJson()
@@ -56,7 +56,7 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
                     callback(null, networkResponse.error)
                 }
 
-            })
-        })
+            }
+        }
     }
 }

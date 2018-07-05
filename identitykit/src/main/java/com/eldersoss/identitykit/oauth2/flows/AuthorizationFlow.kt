@@ -33,9 +33,9 @@ interface AuthorizationFlow {
  * Extension function to help execution of authentication request
  */
 fun authorizeAndPerform(request: NetworkRequest, authorizer: Authorizer, networkClient: NetworkClient, callback: (NetworkResponse) -> Unit) {
-    authorizer.authorize(request, { networkRequest: NetworkRequest, error ->
+    authorizer.authorize(request) { networkRequest: NetworkRequest, error ->
         if (error == null) {
-            networkClient.execute(networkRequest, { networkResponse ->
+            networkClient.execute(networkRequest) { networkResponse ->
                 if (networkResponse.statusCode in 400..499) {
                     var errorResponse = NetworkResponse()
                     errorResponse.error = OAuth2Error.get(networkResponse.getJson()?.optString("error"))
@@ -43,11 +43,11 @@ fun authorizeAndPerform(request: NetworkRequest, authorizer: Authorizer, network
                 } else {
                     callback(networkResponse)
                 }
-            })
+            }
         } else {
             var errorResponse = NetworkResponse()
             errorResponse.error = error
             callback(errorResponse)
         }
-    })
+    }
 }

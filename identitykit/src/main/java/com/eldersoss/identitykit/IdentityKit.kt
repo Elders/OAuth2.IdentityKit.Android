@@ -59,13 +59,13 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      */
     @Synchronized
     fun authorizeAndExecute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
-        authorize(request, { authorizedRequest, error ->
+        authorize(request) { authorizedRequest, error ->
             if (error == null) {
-                client.execute(authorizedRequest, { networkResponse ->
+                client.execute(authorizedRequest) { networkResponse ->
                     callback(networkResponse)
-                })
+                }
             }
-        })
+        }
     }
 
     /**
@@ -90,9 +90,9 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      */
     @Synchronized
     fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
-        client.execute(request, { networkResponse ->
+        client.execute(request) { networkResponse ->
             callback(networkResponse)
-        })
+        }
     }
 
     @Synchronized
@@ -116,7 +116,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
             }
             // we have refresh token stored
             else if (refreshToken != null && refresher != null) {
-                refresher?.refresh(refreshToken, token?.scope, { token, error ->
+                refresher?.refresh(refreshToken, token?.scope) { token, error ->
                     if (token != null) {
                         if (token.refreshToken != null) {
                             storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
@@ -133,12 +133,12 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                     synchronized(lock) {
                         lock.notify()
                     }
-                })
+                }
                 synchronized(lock) {
                     lock.wait()
                 }
             } else {
-                flow.authenticate({ networkResponse ->
+                flow.authenticate { networkResponse ->
                     token = parseToken(networkResponse)
                     if (token != null) {
                         if (token?.refreshToken != null) {
@@ -153,7 +153,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                     synchronized(lock) {
                         lock.notify()
                     }
-                })
+                }
                 synchronized(lock) {
                     lock.wait()
                 }
@@ -175,7 +175,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
         // we have refresh token stored
         val refreshToken = storage?.read(REFRESH_TOKEN)
         if (refreshToken != null && refresher != null) {
-            refreshToken(refreshToken, request, { networkRequest, error ->
+            refreshToken(refreshToken, request) { networkRequest, error ->
                 if (error != null) {
                     callback(networkRequest, error)
                 } else {
@@ -184,12 +184,12 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 synchronized(lock) {
                     lock.notify()
                 }
-            })
+            }
             synchronized(lock) {
                 lock.wait()
             }
         } else {
-            useCredentials(request, { networkRequest, error ->
+            useCredentials(request) { networkRequest, error ->
                 if (error != null) {
                     callback(networkRequest, error)
                 } else {
@@ -198,7 +198,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 synchronized(lock) {
                     lock.notify()
                 }
-            })
+            }
             synchronized(lock) {
                 lock.wait()
             }
@@ -207,7 +207,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
 
     /** Refresh access token and authorize queue */
     private fun refreshToken(refreshToken: String, request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        refresher?.refresh(refreshToken, token?.scope, { token, tokenError ->
+        refresher?.refresh(refreshToken, token?.scope) { token, tokenError ->
             if (tokenError != null) {
                 if (OAuth2Error.INVALID_GRAND == tokenError) {
                     storage?.let { storage.delete(REFRESH_TOKEN) }
@@ -223,13 +223,13 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 }
                 callback(request, null)
             }
-        })
+        }
     }
 
 
     /** Use the given flow to obtain access token */
     private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        flow.authenticate({ networkResponse ->
+        flow.authenticate { networkResponse ->
             token = parseToken(networkResponse)
             if (token != null) {
                 this.token = token
@@ -249,7 +249,7 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                     callback(request, networkResponse.error)
                 }
             }
-        })
+        }
     }
 
     /** Parse Token object from network response this can return null */
