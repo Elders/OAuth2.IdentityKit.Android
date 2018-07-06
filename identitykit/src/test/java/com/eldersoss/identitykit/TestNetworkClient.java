@@ -1,17 +1,11 @@
 package com.eldersoss.identitykit;
 
-import android.os.Handler;
-import android.os.Looper;
-
 import com.eldersoss.identitykit.network.NetworkClient;
 import com.eldersoss.identitykit.network.NetworkRequest;
 import com.eldersoss.identitykit.network.NetworkResponse;
 import com.eldersoss.identitykit.network.volley.VolleyNetworkError;
 
-import org.apache.tools.ant.taskdefs.Sleep;
-
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
