@@ -46,12 +46,12 @@ class SerialExecutorTests {
         val runnable = Runnable {
             val lock = java.lang.Object()
 
-            performNetworkRequest(op, time, {
+            performNetworkRequest(op, time) {
                 result = result.plus(op)
                 synchronized(lock) {
                     lock.notify()
                 }
-            })
+            }
             synchronized(lock) {
                 lock.wait()
             }
@@ -60,10 +60,10 @@ class SerialExecutorTests {
     }
 
     private fun performNetworkRequest(op: Int, time: Int, callback: (op: Int) -> Unit) {
-        val t = Thread({
+        val t = Thread {
             Thread.sleep(time * 100L)
             callback(op)
-        })
+        }
         t.start()
     }
 }

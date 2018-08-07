@@ -21,7 +21,6 @@ import android.util.Base64;
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BasicAuthorizer;
 import com.eldersoss.identitykit.network.NetworkRequest;
-import com.eldersoss.identitykit.oauth2.Error;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +51,7 @@ public class BasicAuthorizerTest {
         final TestResultHandler handler = new TestResultHandler();
 
         Authorizer authorizer = new BasicAuthorizer("clientid", "clientsecret");
-        authorizer.authorize(new NetworkRequest("GET", "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
+        authorizer.authorize(new NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
             @Override
             public Unit invoke(NetworkRequest networkRequest, Error error) {
                 handler.value = networkRequest.getHeaders().get("Authorization");

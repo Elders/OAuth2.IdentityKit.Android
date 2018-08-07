@@ -26,12 +26,18 @@ import kotlin.collections.HashMap
  * @property body usually UTF-8 encoded
  * @constructor Network request
  */
-open class NetworkRequest(val method: String, var url: String, var headers : HashMap<String, String>, var body : ByteArray) {
+open class NetworkRequest(val method: String, val priority: Priority, var url: String, var headers: HashMap<String, String>, var body: ByteArray) {
 
-     var bodyContentType = BODY_CONTENT_TYPE
+    var bodyContentType = BODY_CONTENT_TYPE
 
     //TODO: add necessary parameters for priority, retry and etc
 
+    enum class Priority {
+        LOW,
+        NORMAL,
+        HIGH,
+        IMMEDIATE
+    }
 }
 
 const val BODY_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8"

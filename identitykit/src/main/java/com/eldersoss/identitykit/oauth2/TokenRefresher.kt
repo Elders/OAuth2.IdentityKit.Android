@@ -16,6 +16,8 @@
 
 package com.eldersoss.identitykit.oauth2
 
+import com.eldersoss.identitykit.Error
+
 /**
  * Token refresher interface
  */

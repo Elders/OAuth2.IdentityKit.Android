@@ -39,10 +39,10 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
      */
     override fun authenticate(callback: (NetworkResponse) -> Unit) {
         val uriScope = Uri.encode(scope)
-        val request = NetworkRequest("POST", tokenEndPoint, HashMap(), "grant_type=client_credentials&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
-        authorizeAndPerform(request, authorizer, networkClient,
+        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), "grant_type=client_credentials&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
+        authorizeAndPerform(request, authorizer, networkClient
                 // validate response
-                { networkResponse -> validateResponse(networkResponse, callback) })
+        ) { networkResponse -> validateResponse(networkResponse, callback) }
     }
 
     private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit){

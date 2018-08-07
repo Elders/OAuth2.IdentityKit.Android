@@ -17,10 +17,8 @@
 package com.eldersoss.identitykit.storage
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Base64
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
-import java.nio.charset.Charset
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.DESKeySpec
@@ -40,7 +38,7 @@ class DefaultTokenStorage(val context: Context) : TokenStorage {
     }
 
     override fun delete(key: String) {
-        sharedPref.edit().remove(key).commit();
+        sharedPref.edit().remove(key).commit()
     }
 
     override fun write(key: String, value: String) {

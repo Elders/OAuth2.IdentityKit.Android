@@ -19,7 +19,6 @@ package com.eldersoss.identitykit;
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BearerAuthorizer;
 import com.eldersoss.identitykit.network.NetworkRequest;
-import com.eldersoss.identitykit.oauth2.Error;
 import com.eldersoss.identitykit.oauth2.Token;
 
 import org.junit.Test;
@@ -28,7 +27,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 
 import kotlin.Unit;
@@ -51,7 +49,7 @@ public class BearerAuthorizerTest {
         final TestResultHandler handler = new TestResultHandler();
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.HEADER, token);
-        authorizer.authorize(new NetworkRequest("GET", "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
+        authorizer.authorize(new NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()), new Function2<NetworkRequest, Error, Unit>() {
             @Override
             public Unit invoke(NetworkRequest networkRequest, Error error) {
                 handler.value = networkRequest.getHeaders().get("Authorization");
@@ -68,7 +66,7 @@ public class BearerAuthorizerTest {
         final TestResultHandler handler = new TestResultHandler();
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
-        authorizer.authorize(new NetworkRequest("GET", "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
+        authorizer.authorize(new NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()), new Function2<NetworkRequest, Error, Unit>() {
             @Override
             public Unit invoke(NetworkRequest networkRequest, Error error) {
 
@@ -90,7 +88,7 @@ public class BearerAuthorizerTest {
         final TestResultHandler handler = new TestResultHandler();
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.QUERY, token);
-        authorizer.authorize(new NetworkRequest("GET", "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
+        authorizer.authorize(new NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()), new Function2<NetworkRequest, Error, Unit>() {
             @Override
             public Unit invoke(NetworkRequest networkRequest, Error error) {
                 handler.value = networkRequest.getUrl();

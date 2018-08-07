@@ -16,21 +16,19 @@
 
 package com.eldersoss.identitykit.authorization
 
-import com.eldersoss.identitykit.oauth2.Error
+import com.eldersoss.identitykit.Error
 
 /**
  * Created by IvanVatov on 9/4/2017.
  */
-enum class AuthorizationError(val errorMessage: String?) : Error {
-    invalid_method("invalid_method"),
-    invalid_content_type("invalid_content_type"),
-    unknown(null);
+enum class AuthorizationError : Error {
+    INVALID_METHOD,
+    INVALID_CONTENT_TYPE;
 
-    override fun getMessage(): String{
-        return when(errorMessage) {
-            "invalid_method" -> "The requested method is not valid for this authorization"
-            "invalid_content_type" -> "Invalid content type for this authorization"
-            else -> "Unknown error"
+    override fun getMessage(): String {
+        return when (this) {
+            INVALID_METHOD -> "The requested method is not valid for this authorization"
+            INVALID_CONTENT_TYPE -> "Invalid content type for this authorization"
         }
     }
 }

@@ -63,10 +63,10 @@ class TestAsyncCode {
     }
 
     private fun performNetworkRequest(op: Int, time: Int, callback: (op: Int) -> Unit) {
-        val t = Thread({
+        val t = Thread {
             Thread.sleep(time * 100L)
             callback(op)
-        })
+        }
         t.start()
     }
 }

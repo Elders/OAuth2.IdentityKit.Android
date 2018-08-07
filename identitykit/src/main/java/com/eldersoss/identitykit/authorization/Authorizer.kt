@@ -17,7 +17,7 @@
 package com.eldersoss.identitykit.authorization
 
 import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.oauth2.Error
+import com.eldersoss.identitykit.Error
 
 /**
  * Created by IvanVatov on 8/21/2017.
