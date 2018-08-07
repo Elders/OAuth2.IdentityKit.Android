@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">IdentityKit Demo App</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="token_url">Token URL:</string>
+    <string name="client">Client:</string>
+    <string name="secret">Secret:</string>
+    <string name="scope">Scope:</string>
+    <string name="username">Username:</string>
+    <string name="password">Password:</string>
+</resources>
