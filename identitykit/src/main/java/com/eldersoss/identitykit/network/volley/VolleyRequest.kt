@@ -28,7 +28,15 @@ class VolleyRequest(var request: NetworkRequest, method: Int, url: String, liste
         response.data = volleyError.networkResponse?.data
         response.statusCode = volleyError.networkResponse?.statusCode
         response.headers = volleyError.networkResponse?.headers
-        response.error = VolleyNetworkError.SERVER_ERROR
+        response.error = when(volleyError) {
+            is NetworkError -> VolleyNetworkError.NETWORK_ERROR
+            is ServerError -> VolleyNetworkError.SERVER_ERROR
+            is AuthFailureError -> VolleyNetworkError.AUTH_FAILURE_ERROR
+            is ParseError -> VolleyNetworkError.PARSE_ERROR
+            is NoConnectionError -> VolleyNetworkError.NO_CONNECTION_ERROR
+            is TimeoutError -> VolleyNetworkError.TIMEOUT_ERROR
+            else -> VolleyNetworkError.NETWORK_ERROR
+        }
         callback(response)
     }
 
