@@ -16,7 +16,7 @@
 
 package com.eldersoss.identitykit.network
 
-import com.eldersoss.identitykit.oauth2.Error
+import com.eldersoss.identitykit.Error
 import org.json.JSONObject
 
 /**

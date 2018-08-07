@@ -4,6 +4,9 @@ import android.content.Context
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.RequestQueue
 import com.android.volley.Response
+import com.android.volley.toolbox.BasicNetwork
+import com.android.volley.toolbox.DiskBasedCache
+import com.android.volley.toolbox.HurlStack
 import com.android.volley.toolbox.Volley
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
@@ -12,7 +15,7 @@ import com.eldersoss.identitykit.network.NetworkResponse
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyNetworkClient(val context: Context, val headers: HashMap<String, String>?) : NetworkClient {
+class VolleyNetworkClient(private val context: Context, private val headers: HashMap<String, String>?, private val maxCacheSizeInBytes: Int, private val threadPoolSize: Int) : NetworkClient {
 
     init {
         getRequestQueue()
@@ -20,7 +23,7 @@ class VolleyNetworkClient(val context: Context, val headers: HashMap<String, Str
 
     override fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
 
-        val method = when(request.method) {
+        val method = when (request.method) {
             "GET" -> 0
             "POST" -> 1
             "PUT" -> 2
@@ -42,9 +45,12 @@ class VolleyNetworkClient(val context: Context, val headers: HashMap<String, Str
 
     private var requestQueue: RequestQueue? = null
 
-    fun getRequestQueue(): RequestQueue? {
+    private fun getRequestQueue(): RequestQueue? {
         if (requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(context)
+
+            requestQueue = RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize)
+            requestQueue?.start()
+//            requestQueue = Volley.newRequestQueue(context)
         }
         return requestQueue
     }

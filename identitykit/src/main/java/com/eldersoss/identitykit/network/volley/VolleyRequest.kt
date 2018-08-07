@@ -9,7 +9,7 @@ import com.eldersoss.identitykit.network.NetworkResponse as KitResponse
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyRequest(var request: NetworkRequest, method: Int, url: String, listener: Response.ErrorListener, var headers: HashMap<String, String>, val bytes : ByteArray?, val callback: (KitResponse) -> Unit) : Request<KitResponse>(method, url, listener) {
+class VolleyRequest(var request: NetworkRequest, method: Int, url: String, listener: Response.ErrorListener, var headers: HashMap<String, String>, val bytes: ByteArray?, val callback: (KitResponse) -> Unit) : Request<KitResponse>(method, url, listener) {
 
     override fun parseNetworkResponse(response: NetworkResponse): Response<KitResponse> {
         var result = KitResponse()
@@ -23,12 +23,20 @@ class VolleyRequest(var request: NetworkRequest, method: Int, url: String, liste
         callback(response)
     }
 
-    override fun deliverError(volleyError: VolleyError){
+    override fun deliverError(volleyError: VolleyError) {
         var response = KitResponse()
         response.data = volleyError.networkResponse?.data
         response.statusCode = volleyError.networkResponse?.statusCode
         response.headers = volleyError.networkResponse?.headers
-        response.error = VolleyNetworkError.server_error
+        response.error = when(volleyError) {
+            is NetworkError -> VolleyNetworkError.NETWORK_ERROR
+            is ServerError -> VolleyNetworkError.SERVER_ERROR
+            is AuthFailureError -> VolleyNetworkError.AUTH_FAILURE_ERROR
+            is ParseError -> VolleyNetworkError.PARSE_ERROR
+            is NoConnectionError -> VolleyNetworkError.NO_CONNECTION_ERROR
+            is TimeoutError -> VolleyNetworkError.TIMEOUT_ERROR
+            else -> VolleyNetworkError.NETWORK_ERROR
+        }
         callback(response)
     }
 
@@ -41,14 +49,19 @@ class VolleyRequest(var request: NetworkRequest, method: Int, url: String, liste
     }
 
     override fun getBodyContentType(): String {
-        if (headers["Content-Type"] != null){
+        if (headers["Content-Type"] != null) {
             return headers["Content-Type"]!!
         }
         return "application/x-www-form-urlencoded; charset=$paramsEncoding"
     }
 
     override fun getPriority(): Priority {
-        return super.getPriority()
+        return when (request.priority) {
+            NetworkRequest.Priority.HIGH -> Priority.HIGH
+            NetworkRequest.Priority.NORMAL -> Priority.NORMAL
+            NetworkRequest.Priority.LOW -> Priority.LOW
+            NetworkRequest.Priority.IMMEDIATE -> Priority.IMMEDIATE
+        }
     }
 
     override fun getRetryPolicy(): RetryPolicy {

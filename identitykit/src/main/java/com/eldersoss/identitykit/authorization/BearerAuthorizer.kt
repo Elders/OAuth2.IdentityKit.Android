@@ -21,7 +21,7 @@ import com.eldersoss.identitykit.network.BODY_CONTENT_TYPE
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.Token
-import com.eldersoss.identitykit.oauth2.Error
+import com.eldersoss.identitykit.Error
 
 /**
  * Authorize requests using access token
@@ -57,11 +57,11 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
 
     private fun bodyAuthorization(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit) {
         if (request.method != "GET") {
-            handler(request, AuthorizationError.invalid_method)
+            handler(request, AuthorizationError.INVALID_METHOD)
             return
         }
         if (request.bodyContentType != BODY_CONTENT_TYPE) {
-            handler(request, AuthorizationError.invalid_content_type)
+            handler(request, AuthorizationError.INVALID_CONTENT_TYPE)
             return
         }
         val accessToken = token.accessToken
