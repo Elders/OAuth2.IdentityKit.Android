@@ -16,11 +16,11 @@ enum class VolleyNetworkError : Error {
 
     override fun getMessage(): String {
         return when (this) {
-            NETWORK_ERROR -> "Cannot connect to Internet...Please check your connection!"
-            SERVER_ERROR -> "The server could not be found. Please try again after some time!"
-            AUTH_FAILURE_ERROR -> "Cannot connect to Internet...Please check your connection!"
-            PARSE_ERROR -> "Parsing error! Please try again after some time!!"
-            NO_CONNECTION_ERROR -> "Cannot connect to Internet...Please check your connection!"
+            NETWORK_ERROR -> "There was a network error when performing a request!"
+            SERVER_ERROR -> "The server responded with an error response."
+            AUTH_FAILURE_ERROR -> "Unauthorized request or invalid authentication credentials for the target resource."
+            PARSE_ERROR -> "The server's response could not be parsed."
+            NO_CONNECTION_ERROR -> "Cannot connect to Internet. Please check your connection!"
             TIMEOUT_ERROR -> "Connection TimeOut! Please check your internet connection."
         }
     }

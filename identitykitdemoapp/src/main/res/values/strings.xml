@@ -9,4 +9,6 @@
     <string name="scope">Scope:</string>
     <string name="username">Username:</string>
     <string name="password">Password:</string>
+    <string name="get_token">Get Token</string>
+    <string name="get_request">Get Request</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.eldersoss.identitykitdemoapp.fragments
 
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
@@ -39,10 +40,32 @@ class SetupFragment : Fragment() {
         val confirmButton = rootView.findViewById<Button>(R.id.confirm_button)
 
         confirmButton.setOnClickListener {
+            saveToSharedPreferences()
             callback?.invoke(initIdentityKit())
         }
 
+        loadFromSharedPreferences()
+
         return rootView
+    }
+
+    private fun saveToSharedPreferences() {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        with(sharedPref.edit()) {
+            putString("tokenUrlEditText", tokenUrlEditText?.text.toString())
+            putString("clientEditText", clientEditText?.text.toString())
+            putString("secretEditText", secretEditText?.text.toString())
+            putString("scopeEditText", scopeEditText?.text.toString())
+            commit()
+        }
+    }
+
+    private fun loadFromSharedPreferences() {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        tokenUrlEditText?.setText(sharedPref.getString("tokenUrlEditText", null))
+        clientEditText?.setText(sharedPref.getString("clientEditText", null))
+        secretEditText?.setText(sharedPref.getString("secretEditText", null))
+        scopeEditText?.setText(sharedPref.getString("scopeEditText", null))
     }
 
     private fun initIdentityKit(): IdentityKit {
