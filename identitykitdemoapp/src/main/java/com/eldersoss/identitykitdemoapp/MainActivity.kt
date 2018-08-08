@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity(), CredentialsProvider {
     var demoLayout: LinearLayout? = null
     var resultTextView: TextView? = null
     var getRequestUrlEditText: EditText? = null
+    var clearResultButton: Button? = null
     var getTokenButton: Button? = null
     var getRequestButton: Button? = null
 
@@ -46,9 +47,12 @@ class MainActivity : AppCompatActivity(), CredentialsProvider {
         demoLayout = findViewById(R.id.demo_layout)
         resultTextView = findViewById(R.id.result_text_view)
         getRequestUrlEditText = findViewById(R.id.get_request_url_edit_text)
+        clearResultButton = findViewById(R.id.clear_result_button)
         getTokenButton = findViewById(R.id.get_token_button)
         getRequestButton = findViewById(R.id.get_request_button)
 
+
+        clearResultButton?.setOnClickListener { resultTextView?.text = null }
 
         getRequestButton?.setOnClickListener {
             identityKit?.execute(NetworkRequest("GET", NetworkRequest.Priority.HIGH, getRequestUrlEditText?.text.toString(), HashMap(), ByteArray(0))) { networkResponse ->

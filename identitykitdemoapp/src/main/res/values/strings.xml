@@ -11,4 +11,5 @@
     <string name="password">Password:</string>
     <string name="get_token">Get Token</string>
     <string name="get_request">Get Request</string>
+    <string name="clear_result">Clear Result</string>
 </resources>
