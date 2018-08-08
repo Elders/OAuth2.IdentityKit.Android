@@ -63,6 +63,10 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
                 client.execute(authorizedRequest) { networkResponse ->
                     callback(networkResponse)
                 }
+            } else {
+                val response = NetworkResponse()
+                response.error = error
+                callback(response)
             }
         }
     }
