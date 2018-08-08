@@ -21,37 +21,47 @@ import com.eldersoss.identitykitdemoapp.fragments.SetupFragment
 
 class MainActivity : AppCompatActivity(), CredentialsProvider {
 
-    var identityKit: IdentityKit? = null
+    private var identityKit: IdentityKit? = null
 
-    var demoLayout: LinearLayout? = null
-    var resultTextView: TextView? = null
-    var getRequestUrlEditText: EditText? = null
-    var getTokenButton: Button? = null
-    var getRequestButton: Button? = null
+    private var demoLayout: LinearLayout? = null
+    private var resultTextView: TextView? = null
+    private var getRequestUrlEditText: EditText? = null
+    private var clearResultButton: Button? = null
+    private var revokeButton: Button? = null
+    private var getTokenButton: Button? = null
+    private var getRequestButton: Button? = null
 
 
     override fun provideCredentials(handler: Credentials) {
-        demoLayout?.visibility = View.GONE
-        setFragment(CredentialsFragment.newInstance { username, password ->
-            setFragment(Fragment())
-            demoLayout?.visibility = View.VISIBLE
-            handler(username, password)
-        })
+        Handler(Looper.getMainLooper()).post {
+            demoLayout?.visibility = View.GONE
+            setFragment(CredentialsFragment.newInstance { username, password ->
+                setFragment(Fragment())
+                demoLayout?.visibility = View.VISIBLE
+                handler(username, password)
+            })
+        }
     }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         demoLayout = findViewById(R.id.demo_layout)
         resultTextView = findViewById(R.id.result_text_view)
         getRequestUrlEditText = findViewById(R.id.get_request_url_edit_text)
+        revokeButton = findViewById(R.id.revoke_button)
+        clearResultButton = findViewById(R.id.clear_result_button)
         getTokenButton = findViewById(R.id.get_token_button)
         getRequestButton = findViewById(R.id.get_request_button)
 
+        revokeButton?.setOnClickListener { identityKit?.revokeAuthentication() }
+
+        clearResultButton?.setOnClickListener { resultTextView?.text = null }
 
         getRequestButton?.setOnClickListener {
-            identityKit?.execute(NetworkRequest("GET", NetworkRequest.Priority.HIGH, getRequestUrlEditText?.text.toString(), HashMap(), ByteArray(0))) { networkResponse ->
+            identityKit?.authorizeAndExecute(NetworkRequest("GET", NetworkRequest.Priority.HIGH, getRequestUrlEditText?.text.toString(), HashMap(), ByteArray(0))) { networkResponse ->
                 Handler(Looper.getMainLooper()).post {
                     if (networkResponse.error != null) {
                         resultTextView?.text = networkResponse.error?.getMessage()
@@ -76,6 +86,12 @@ class MainActivity : AppCompatActivity(), CredentialsProvider {
     private fun getValidToken() {
         identityKit?.getValidToken { token, error ->
             Handler(Looper.getMainLooper()).post {
+                if (demoLayout?.visibility == View.GONE) {
+                    setFragment(Fragment())
+                    demoLayout?.visibility = View.VISIBLE
+                }
+
+
                 if (token != null) {
                     resultTextView?.text = token.accessToken
                 } else if (error != null) {
