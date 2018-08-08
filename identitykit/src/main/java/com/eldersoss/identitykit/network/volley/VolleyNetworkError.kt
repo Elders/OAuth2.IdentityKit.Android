@@ -16,7 +16,7 @@ enum class VolleyNetworkError : Error {
 
     override fun getMessage(): String {
         return when (this) {
-            NETWORK_ERROR -> "There was a network error when performing a request!"
+            NETWORK_ERROR -> "There was a network error when performing a request. Please check your internet connection!"
             SERVER_ERROR -> "The server responded with an error response."
             AUTH_FAILURE_ERROR -> "Unauthorized request or invalid authentication credentials for the target resource."
             PARSE_ERROR -> "The server's response could not be parsed."
