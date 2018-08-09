@@ -19,6 +19,7 @@ package com.eldersoss.identitykit.oauth2.flows
 import android.net.Uri
 import com.eldersoss.identitykit.CredentialsProvider
 import com.eldersoss.identitykit.authorization.Authorizer
+import com.eldersoss.identitykit.authorization.authorizeAndPerform
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
@@ -42,7 +43,7 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
         credentialsProvider.provideCredentials { username, password ->
             val uriScope = Uri.encode(scope)
             val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), "grant_type=password&username=$username&password=$password&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
-            authorizeAndPerform(request, authorizer, networkClient, callback)
+            authorizer.authorizeAndPerform(request, networkClient, callback)
         }
     }
 }

@@ -25,10 +25,12 @@ import com.eldersoss.identitykit.oauth2.Token
 import com.eldersoss.identitykit.oauth2.OAuth2Error
 import com.eldersoss.identitykit.oauth2.TokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow
+import com.eldersoss.identitykit.oauth2.parseToken
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import com.eldersoss.identitykit.storage.TokenStorage
 
 /**
+ * @property kitConfiguration - configuration
  * @property flow - Desired Oauth2 flow
  * @property tokenAuthorizationProvider - function which return authorizer
  * @property refresher - token refresher must implement TokenRefresher, DefaultTokenRefresher provided
@@ -36,19 +38,20 @@ import com.eldersoss.identitykit.storage.TokenStorage
  * @property client Network client with ability to execute NetworkRequest
  * @constructor - the primary constructor is not used currently
  */
-class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (Token) -> Authorizer, val refresher: TokenRefresher?, val storage: TokenStorage?, val client: NetworkClient) {
+class IdentityKit(private val kitConfiguration: KitConfiguration, private val flow: AuthorizationFlow, private val tokenAuthorizationProvider: (Token) -> Authorizer, private val refresher: TokenRefresher?, private val storage: TokenStorage?, private val client: NetworkClient) {
     /**
      * Constructor that take BearerAuthorizer.Method
      */
-    constructor(flow: AuthorizationFlow, tokenAuthorizationMethod: BearerAuthorizer.Method, refresher: TokenRefresher?, storage: TokenStorage?, client: NetworkClient) :
+    constructor(kitConfiguration: KitConfiguration, flow: AuthorizationFlow, tokenAuthorizationMethod: BearerAuthorizer.Method, refresher: TokenRefresher?, storage: TokenStorage?, client: NetworkClient) :
             this(
-                    flow, { token -> BearerAuthorizer(tokenAuthorizationMethod, token) }, refresher, storage, client
+                    kitConfiguration, flow, { token -> BearerAuthorizer(tokenAuthorizationMethod, token) }, refresher, storage, client
             )
 
-
-    private var token: Token? = null
+    @Volatile
+    private var _token: Token? = null
 
     private val executor = SerialTaskExecutor()
+    private val lock = java.lang.Object()
 
     /**
      * Authotrize and execute the request with provided network client
@@ -77,7 +80,6 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * @param callback callback function that return back authorized request,
      * Possible case callback can return unauthorized request and Error
      */
-    @Synchronized
     fun authorize(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         val runnable = Runnable {
             authorizeOrRefresh(request, callback)
@@ -91,75 +93,36 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * @param callback callback function that return back NetworkResponse,
      * Possible case callback can return NetworkResponse with Error
      */
-    @Synchronized
     fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
         client.execute(request) { networkResponse ->
             callback(networkResponse)
         }
     }
 
-    @Synchronized
     fun revokeAuthentication() {
         val runnable = Runnable {
             storage?.let { storage.delete(REFRESH_TOKEN) }
-            this.token = null
+            this._token = null
         }
         executor.execute(runnable)
     }
 
-    @Synchronized
+
     fun getValidToken(callback: (Token?, Error?) -> Unit) {
         val runnable = Runnable {
-            val lock = java.lang.Object()
-
-            val refreshToken = storage?.read(REFRESH_TOKEN)
-            if (tokenIsValid()) {
-                // We have valid token
-                callback(token!!, null)
+            validToken()?.let {
+                callback(it, null)
+                return@Runnable
             }
+            val refreshToken = storage?.read(REFRESH_TOKEN)
             // we have refresh token stored
-            else if (refreshToken != null && refresher != null) {
-                refresher?.refresh(refreshToken, token?.scope) { token, error ->
-                    if (token != null) {
-                        if (token.refreshToken != null) {
-                            storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
-                        }
-                        this.token = token
-                        callback(token!!, null)
-                    } else {
-                        if (error == OAuth2Error.INVALID_GRAND) {
-                            storage?.let { storage.delete(REFRESH_TOKEN) }
-                        }
-                        this.token = null
-                        callback(null, error)
-                    }
-                    synchronized(lock) {
-                        lock.notify()
-                    }
-                }
-                synchronized(lock) {
-                    lock.wait()
-                }
+            if (refreshToken != null && refresher != null) {
+                refresherRefreshToken(refreshToken, callback)
             } else {
-                flow.authenticate { networkResponse ->
-                    token = parseToken(networkResponse)
-                    if (token != null) {
-                        if (token?.refreshToken != null) {
-                            storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
-                        }
-                        this.token = token
-                        callback(token!!, null)
-                    } else {
-                        this.token = null
-                        callback(null, networkResponse.error)
-                    }
-                    synchronized(lock) {
-                        lock.notify()
-                    }
-                }
-                synchronized(lock) {
-                    lock.wait()
-                }
+                flowAuthenticate(callback)
+            }
+            synchronized(lock) {
+                lock.wait()
             }
         }
         executor.execute(runnable)
@@ -169,118 +132,97 @@ class IdentityKit(val flow: AuthorizationFlow, val tokenAuthorizationProvider: (
      * Perform internal logic to authorize the request
      */
     private fun authorizeOrRefresh(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        val lock = java.lang.Object()
-
-        if (tokenIsValid()) {
-            tokenAuthorizationProvider(token!!).authorize(request, callback)
+        validToken()?.let {
+            tokenAuthorizationProvider(it).authorize(request, callback)
             return
         }
         // we have refresh token stored
         val refreshToken = storage?.read(REFRESH_TOKEN)
         if (refreshToken != null && refresher != null) {
-            refreshToken(refreshToken, request) { networkRequest, error ->
+            refresherRefreshToken(refreshToken) { token, error ->
                 if (error != null) {
-                    callback(networkRequest, error)
+                    callback(request, error)
                 } else {
                     tokenAuthorizationProvider(token!!).authorize(request, callback)
                 }
-                synchronized(lock) {
-                    lock.notify()
-                }
-            }
-            synchronized(lock) {
-                lock.wait()
+
             }
         } else {
-            useCredentials(request) { networkRequest, error ->
+            flowAuthenticate { token, error ->
                 if (error != null) {
-                    callback(networkRequest, error)
+                    callback(request, error)
                 } else {
                     tokenAuthorizationProvider(token!!).authorize(request, callback)
                 }
-                synchronized(lock) {
-                    lock.notify()
-                }
-            }
-            synchronized(lock) {
-                lock.wait()
             }
         }
-    }
-
-    /** Refresh access token and authorize queue */
-    private fun refreshToken(refreshToken: String, request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
-        refresher?.refresh(refreshToken, token?.scope) { token, tokenError ->
-            if (tokenError != null) {
-                if (OAuth2Error.INVALID_GRAND == tokenError) {
-                    storage?.let { storage.delete(REFRESH_TOKEN) }
-                    useCredentials(request, callback)
-                } else {
-                    callback(request, tokenError)
-                }
-            }
-            if (token != null) {
-                this.token = token
-                if (token.refreshToken != null) {
-                    storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
-                }
-                callback(request, null)
-            }
+        synchronized(lock) {
+            lock.wait()
         }
     }
 
 
     /** Use the given flow to obtain access token */
-    private fun useCredentials(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
+    private fun flowAuthenticate(callback: (Token?, Error?) -> Unit) {
         flow.authenticate { networkResponse ->
-            token = parseToken(networkResponse)
-            if (token != null) {
-                this.token = token
-                if (token?.refreshToken != null) {
-                    storage?.let { storage.write(REFRESH_TOKEN, token?.refreshToken!!) }
-                }
-                callback(request, null)
-            } else {
-                if (networkResponse.statusCode in 400..499 && networkResponse.getJson() != null) {
-                    val error = getError(networkResponse)
-                    networkResponse.error = error
-                    callback(request, networkResponse.error)
-                    if (error is OAuth2Error) {
-                        useCredentials(request, callback)
+
+            parseToken(networkResponse) { token, error ->
+                if (error is OAuth2Error && kitConfiguration.retryFlowAuthentication) {
+                    if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
+                        callback(token, error)
                     }
-                } else {
-                    callback(request, networkResponse.error)
+                    flowAuthenticate(callback)
+                    return@parseToken
+                }
+                callback(token, error)
+
+                if (token != null) {
+                    this._token = token
+                    if (token.refreshToken != null) {
+                        storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
+                    }
+                }
+                synchronized(lock) {
+                    lock.notify()
                 }
             }
         }
     }
 
-    /** Parse Token object from network response this can return null */
-    private fun parseToken(networkResponse: NetworkResponse): Token? {
-        //Parse Token from network response
-        if (networkResponse.getJson() != null) {
-            if (networkResponse.statusCode in 200..299) {
-                val jsonObject = networkResponse.getJson()
-                val accessToken = jsonObject?.optString("access_token", null)
-                val tokenType = jsonObject?.optString("token_type", null)
-                val expiresIn = (System.currentTimeMillis() / 1000) + jsonObject!!.optLong("expires_in", 0L)
-                val refreshToken = jsonObject?.optString("refresh_token", null)
-                val scope = jsonObject?.optString("scope", null)
-                if (accessToken != null && tokenType != null && expiresIn != null) {
-                    // if response is valid token return it to callback
-                    return Token(accessToken, tokenType, expiresIn, refreshToken, scope)
+    /** Refresh access token */
+    private fun refresherRefreshToken(refreshToken: String, callback: (Token?, Error?) -> Unit) {
+        refresher?.refresh(refreshToken, _token?.scope) { token, error ->
+            if (token != null) {
+                this._token = token
+                if (token.refreshToken != null) {
+                    storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
                 }
+                callback(token, null)
+            } else {
+                if (error is OAuth2Error) {
+                    storage?.let { storage.delete(REFRESH_TOKEN) }
+                    if (kitConfiguration.authenticateOnFailedRefresh) {
+                        if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
+                            callback(token, error)
+                        }
+                        flowAuthenticate(callback)
+                        return@refresh
+                    }
+                }
+                callback(null, error)
+            }
+            synchronized(lock) {
+                lock.notify()
+            }
+        }
+    }
+
+    private fun validToken(): Token? {
+        if (this._token != null && this._token?.expiresIn != null) {
+            if (this._token?.expiresIn!! > System.currentTimeMillis() / 1000) {
+                return this._token
             }
         }
         return null
-    }
-
-    private fun tokenIsValid(): Boolean {
-        if (token != null && token?.expiresIn != null) {
-            if (token?.expiresIn!! > System.currentTimeMillis() / 1000) {
-                return true
-            }
-        }
-        return false
     }
 }
