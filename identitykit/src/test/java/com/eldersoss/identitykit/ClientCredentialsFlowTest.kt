@@ -22,7 +22,9 @@ import java.util.HashMap
 @Config(constants = BuildConfig::class)
 class ClientCredentialsFlowTest {
 
-    val mainLock = java.lang.Object()
+    private val mainLock = java.lang.Object()
+
+    private val configuration = KitConfiguration(false, false, false, false)
 
     @Test
     fun identityKitInitializationTest() {
@@ -32,7 +34,7 @@ class ClientCredentialsFlowTest {
         networkClient = TestNetworkClient()
         val authorizer = BasicAuthorizer("client", "secret")
         val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-        kit = IdentityKit(flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
+        kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
         kit.authorizeAndExecute(NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", HashMap(), "".toByteArray())) { null }
         assertTrue(kit != null)
@@ -54,7 +56,7 @@ class ClientCredentialsFlowTest {
 
             val authorizer = BasicAuthorizer("client", "secret")
             val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-            kit = IdentityKit(flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
+            kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
             val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
             kit.authorize(request) { networkRequest, error ->
@@ -87,7 +89,7 @@ class ClientCredentialsFlowTest {
             // building IdentityKit
             val authorizer = BasicAuthorizer("client", "secret")
             val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-            kit = IdentityKit(flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
+            kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
             val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
             kit.authorize(request) { networkRequest, error ->
@@ -122,7 +124,7 @@ class ClientCredentialsFlowTest {
 
             val authorizer = BasicAuthorizer("client", "secret")
             val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-            kit = IdentityKit(flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), tokenStorage, networkClient)
+            kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), tokenStorage, networkClient)
 
             val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
             kit.authorize(request) { networkRequest, error ->
