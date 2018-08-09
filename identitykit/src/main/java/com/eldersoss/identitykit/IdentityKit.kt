@@ -167,15 +167,12 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
         flow.authenticate { networkResponse ->
 
             parseToken(networkResponse) { token, error ->
-                if ((error is OAuth2Error && kitConfiguration.authenticateOnAllOAuth2Errors) || error == OAuth2Error.INVALID_GRAND) {
-                    storage?.let { storage.delete(REFRESH_TOKEN) }
-                    if (kitConfiguration.retryFlowAuthentication) {
-                        if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
-                            callback(token, error)
-                        }
-                        flowAuthenticate(callback)
-                        return@parseToken
+                if (error is OAuth2Error && kitConfiguration.retryFlowAuthentication) {
+                    if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
+                        callback(token, error)
                     }
+                    flowAuthenticate(callback)
+                    return@parseToken
                 }
                 callback(token, error)
 
@@ -199,7 +196,7 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
                 }
                 callback(token, null)
             } else {
-                if ((error is OAuth2Error && kitConfiguration.authenticateOnAllOAuth2Errors) || error == OAuth2Error.INVALID_GRAND) {
+                if (error is OAuth2Error) {
                     storage?.let { storage.delete(REFRESH_TOKEN) }
                     if (kitConfiguration.authenticateOnFailedRefresh) {
                         if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {

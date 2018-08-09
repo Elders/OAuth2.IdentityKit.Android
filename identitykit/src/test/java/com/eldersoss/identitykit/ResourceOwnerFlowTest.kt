@@ -23,7 +23,7 @@ import java.util.HashMap
 @Config(constants = BuildConfig::class)
 class ResourceOwnerFlowTest {
 
-    private val configuration = KitConfiguration(false, false, false, false)
+    private val configuration = KitConfiguration(false, false, false)
 
     @Test
     fun identityKitInitializationTest() {

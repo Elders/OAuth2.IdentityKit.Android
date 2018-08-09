@@ -24,7 +24,7 @@ class ClientCredentialsFlowTest {
 
     private val mainLock = java.lang.Object()
 
-    private val configuration = KitConfiguration(false, false, false, false)
+    private val configuration = KitConfiguration(false, false, false)
 
     @Test
     fun identityKitInitializationTest() {
