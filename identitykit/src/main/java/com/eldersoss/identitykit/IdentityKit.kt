@@ -80,7 +80,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
      * @param callback callback function that return back authorized request,
      * Possible case callback can return unauthorized request and Error
      */
-    @Synchronized
     fun authorize(request: NetworkRequest, callback: (NetworkRequest, Error?) -> Unit) {
         val runnable = Runnable {
             authorizeOrRefresh(request, callback)
@@ -94,14 +93,12 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
      * @param callback callback function that return back NetworkResponse,
      * Possible case callback can return NetworkResponse with Error
      */
-    @Synchronized
     fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
         client.execute(request) { networkResponse ->
             callback(networkResponse)
         }
     }
 
-    @Synchronized
     fun revokeAuthentication() {
         val runnable = Runnable {
             storage?.let { storage.delete(REFRESH_TOKEN) }
@@ -110,7 +107,7 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
         executor.execute(runnable)
     }
 
-    @Synchronized
+
     fun getValidToken(callback: (Token?, Error?) -> Unit) {
         val runnable = Runnable {
             val refreshToken = storage?.read(REFRESH_TOKEN)
