@@ -110,11 +110,11 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
 
     fun getValidToken(callback: (Token?, Error?) -> Unit) {
         val runnable = Runnable {
-            val refreshToken = storage?.read(REFRESH_TOKEN)
             validToken()?.let {
                 callback(it, null)
                 return@Runnable
             }
+            val refreshToken = storage?.read(REFRESH_TOKEN)
             // we have refresh token stored
             if (refreshToken != null && refresher != null) {
                 refresherRefreshToken(refreshToken, callback)
@@ -181,6 +181,9 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
                     if (token.refreshToken != null) {
                         storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
                     }
+                }
+                synchronized(lock) {
+                    lock.notify()
                 }
             }
         }

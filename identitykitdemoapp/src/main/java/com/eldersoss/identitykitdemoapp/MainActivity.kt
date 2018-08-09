@@ -33,14 +33,14 @@ class MainActivity : AppCompatActivity(), CredentialsProvider {
 
 
     override fun provideCredentials(handler: Credentials) {
-        Handler(Looper.getMainLooper()).post {
+        Handler(Looper.getMainLooper()).postDelayed( {
             demoLayout?.visibility = View.GONE
             setFragment(CredentialsFragment.newInstance { username, password ->
                 setFragment(Fragment())
                 demoLayout?.visibility = View.VISIBLE
                 handler(username, password)
             })
-        }
+        }, 2000)
     }
 
 
