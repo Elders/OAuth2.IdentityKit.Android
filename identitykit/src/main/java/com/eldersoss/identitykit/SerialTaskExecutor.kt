@@ -25,32 +25,24 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class SerialTaskExecutor : Executor {
 
-    private val CORE_POOL_SIZE = 5
-    private val MAXIMUM_POOL_SIZE = 128
-    private val KEEP_ALIVE = 1
+    private var sThreadFactory: ThreadFactory = object : ThreadFactory {
+        private val mCount = AtomicInteger(1)
 
-    private var sThreadFactory: ThreadFactory? = null
-    private var sPoolWorkQueue: BlockingQueue<Runnable>? = null
-
-
-    private var THREAD_POOL_EXECUTOR: ThreadPoolExecutor? = null
-
-    init {
-        sPoolWorkQueue = LinkedBlockingQueue(10)
-        sThreadFactory = object : ThreadFactory {
-            private val mCount = AtomicInteger(1)
-
-            override fun newThread(r: Runnable): Thread {
-                return Thread(r, "IdentityKit #" + mCount.getAndIncrement())
-            }
+        override fun newThread(r: Runnable): Thread {
+            return Thread(r, "IdentityKit #" + mCount.getAndIncrement())
         }
-        THREAD_POOL_EXECUTOR = ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE.toLong(), TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory)
     }
 
-    internal val mTasks = ArrayDeque<Runnable>()
-    internal var mActive: Runnable? = null
+    private var sPoolWorkQueue: BlockingQueue<Runnable> = LinkedBlockingQueue(10)
 
-    @Synchronized override fun execute(r: Runnable) {
+    private var threadPoolExecutor: ThreadPoolExecutor = ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE, KEEP_ALIVE, TimeUnit.SECONDS, sPoolWorkQueue, sThreadFactory)
+
+    private val mTasks = ArrayDeque<Runnable>()
+
+    private var mActive: Runnable? = null
+
+    @Synchronized
+    override fun execute(r: Runnable) {
         mTasks.offer(Runnable {
             try {
                 r.run()
@@ -63,10 +55,17 @@ class SerialTaskExecutor : Executor {
         }
     }
 
-    @Synchronized protected fun scheduleNext() {
+    @Synchronized
+    private fun scheduleNext() {
         mActive = mTasks.poll()
         if (mActive != null) {
-            THREAD_POOL_EXECUTOR!!.execute(mActive!!)
+            threadPoolExecutor.execute(mActive!!)
         }
+    }
+
+    companion object {
+        private const val CORE_POOL_SIZE = 1
+        private const val MAXIMUM_POOL_SIZE = 5
+        private const val KEEP_ALIVE = 1L
     }
 }
