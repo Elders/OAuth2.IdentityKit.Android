@@ -16,10 +16,6 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
-import com.eldersoss.identitykit.authorization.Authorizer
-import com.eldersoss.identitykit.getError
-import com.eldersoss.identitykit.network.NetworkClient
-import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
 
 /**
@@ -27,27 +23,4 @@ import com.eldersoss.identitykit.network.NetworkResponse
  */
 interface AuthorizationFlow {
     fun authenticate(callback: (NetworkResponse) -> Unit)
-}
-
-/**
- * Extension function to help execution of authentication request
- */
-fun authorizeAndPerform(request: NetworkRequest, authorizer: Authorizer, networkClient: NetworkClient, callback: (NetworkResponse) -> Unit) {
-    authorizer.authorize(request) { networkRequest: NetworkRequest, error ->
-        if (error == null) {
-            networkClient.execute(networkRequest) { networkResponse ->
-                if (networkResponse.statusCode in 400..499) {
-                    var errorResponse = NetworkResponse()
-                    errorResponse.error = getError(networkResponse)
-                    callback(errorResponse)
-                } else {
-                    callback(networkResponse)
-                }
-            }
-        } else {
-            var errorResponse = NetworkResponse()
-            errorResponse.error = error
-            callback(errorResponse)
-        }
-    }
 }

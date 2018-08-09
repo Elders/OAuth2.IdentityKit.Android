@@ -16,12 +16,48 @@
 
 package com.eldersoss.identitykit.oauth2
 
+import com.eldersoss.identitykit.Error
+import com.eldersoss.identitykit.getError
+import com.eldersoss.identitykit.network.NetworkResponse
+
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-5.1">Successful Response</a>
  *  @constructor Access token object
  */
 data class Token(val accessToken: String,
-            val tokenType: String,
-            val expiresIn: Long,
-            val refreshToken: String?,
-            val scope: String?)
+                 val tokenType: String,
+                 val expiresIn: Long,
+                 val refreshToken: String?,
+                 val scope: String?)
+
+/** Parse Token object from network response, possible error */
+fun parseToken(networkResponse: NetworkResponse, callback: (Token?, Error?) -> Unit) {
+    if (networkResponse.getJson() != null && networkResponse.statusCode in 200..299) {
+        val jsonObject = networkResponse.getJson()
+        jsonObject?.let {
+            try {
+                callback(
+                        Token(
+                                //required fields
+                                it.getString("access_token"),
+                                it.getString("token_type"),
+                                (System.currentTimeMillis() / 1000) + it.getLong("expires_in"),
+                                //optional fields
+                                it.optString("refresh_token", null),
+                                it.optString("scope", null
+                                )
+                        ), null
+
+                )
+            } catch (e: Exception) {
+                callback(null, OAuth2Error.INVALID_TOKEN_RESPONSE)
+            }
+        }
+    } else if (networkResponse.statusCode in 400..499) {
+        // try found Oauth2Error or return NetworkError
+        callback(null, getError(networkResponse))
+    } else {
+        // return error from network client
+        callback(null, networkResponse.error)
+    }
+}

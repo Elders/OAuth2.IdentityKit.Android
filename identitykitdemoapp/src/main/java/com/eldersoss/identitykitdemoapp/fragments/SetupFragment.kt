@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.EditText
 import com.eldersoss.identitykit.CredentialsProvider
 import com.eldersoss.identitykit.IdentityKit
+import com.eldersoss.identitykit.KitConfiguration
 import com.eldersoss.identitykit.authorization.BasicAuthorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
 import com.eldersoss.identitykit.network.volley.VolleyNetworkClient
@@ -69,10 +70,11 @@ class SetupFragment : Fragment() {
     }
 
     private fun initIdentityKit(): IdentityKit {
+        val configuration = KitConfiguration(true, true, true)
         val client = VolleyNetworkClient(context!!, null, 0, 12)
         val authorizer = BasicAuthorizer(clientEditText?.text.toString(), secretEditText?.text.toString())
         val flow = ResourceOwnerFlow(tokenUrlEditText?.text.toString(), credentialsProvider!!, scopeEditText?.text.toString(), authorizer, client)
-        return IdentityKit(flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher(tokenUrlEditText?.text.toString(), client, authorizer), DefaultTokenStorage(context!!), client)
+        return IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher(tokenUrlEditText?.text.toString(), client, authorizer), DefaultTokenStorage(context!!), client)
     }
 
     companion object {
