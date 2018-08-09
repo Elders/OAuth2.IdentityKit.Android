@@ -78,7 +78,8 @@ class MainActivity : AppCompatActivity(), CredentialsProvider {
 
         setFragment(SetupFragment.newInstance(this) {
             this.identityKit = it
-            getValidToken()
+            demoLayout?.visibility = View.VISIBLE
+            setFragment(Fragment())
         })
 
     }
