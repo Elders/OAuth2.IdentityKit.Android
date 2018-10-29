@@ -18,6 +18,7 @@ import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.ResourceOwnerFlow
 import com.eldersoss.identitykit.storage.DefaultTokenStorage
 import com.eldersoss.identitykitdemoapp.R
+import java.util.concurrent.Executors
 
 class SetupFragment : Fragment() {
 
@@ -71,7 +72,7 @@ class SetupFragment : Fragment() {
 
     private fun initIdentityKit(): IdentityKit {
         val configuration = KitConfiguration(true, true, true)
-        val client = VolleyNetworkClient(context!!, null, 0, 12)
+        val client = VolleyNetworkClient(context!!, null, 0, 12, Executors.newSingleThreadExecutor())
         val authorizer = BasicAuthorizer(clientEditText?.text.toString(), secretEditText?.text.toString())
         val flow = ResourceOwnerFlow(tokenUrlEditText?.text.toString(), credentialsProvider!!, scopeEditText?.text.toString(), authorizer, client)
         return IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher(tokenUrlEditText?.text.toString(), client, authorizer), DefaultTokenStorage(context!!), client)
