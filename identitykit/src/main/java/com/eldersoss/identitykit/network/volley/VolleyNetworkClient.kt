@@ -1,6 +1,8 @@
 package com.eldersoss.identitykit.network.volley
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.android.volley.DefaultRetryPolicy
 import com.android.volley.ExecutorDelivery
 import com.android.volley.RequestQueue
@@ -16,10 +18,19 @@ import java.util.concurrent.Executor
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyNetworkClient(private val context: Context, private val headers: HashMap<String, String>?, private val maxCacheSizeInBytes: Int, private val threadPoolSize: Int, private val executor: Executor?) : NetworkClient {
+class VolleyNetworkClient : NetworkClient {
 
-    init {
-        getRequestQueue()
+    private val requestQueue: RequestQueue
+    private val headers: HashMap<String, String>?
+
+    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(Handler(Looper.getMainLooper())))
+
+    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, executor: Executor) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(executor))
+
+    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, executorDelivery: ExecutorDelivery) {
+        this.headers = headers
+        requestQueue = RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize, executorDelivery)
+        requestQueue.start()
     }
 
     override fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
@@ -35,29 +46,12 @@ class VolleyNetworkClient(private val context: Context, private val headers: Has
             "PATCH" -> 7
             else -> -1
         }
-        var mergedHeaders = request.headers
+        val mergedHeaders = request.headers
         if (headers != null) {
             mergedHeaders.putAll(headers)
         }
         val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), mergedHeaders, request.body, callback)
         volleyRequest.retryPolicy = DefaultRetryPolicy(30000, 1, 1f)
-        requestQueue?.add(volleyRequest)
-    }
-
-    private var requestQueue: RequestQueue? = null
-
-    private fun getRequestQueue(): RequestQueue? {
-        if (requestQueue == null) {
-
-            requestQueue = if (executor != null) {
-                RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize, ExecutorDelivery(executor))
-            } else {
-                RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize)
-            }
-
-            requestQueue?.start()
-//            requestQueue = Volley.newRequestQueue(context)
-        }
-        return requestQueue
+        requestQueue.add(volleyRequest)
     }
 }
