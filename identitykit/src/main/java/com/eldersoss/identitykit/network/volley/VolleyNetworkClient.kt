@@ -2,20 +2,21 @@ package com.eldersoss.identitykit.network.volley
 
 import android.content.Context
 import com.android.volley.DefaultRetryPolicy
+import com.android.volley.ExecutorDelivery
 import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.DiskBasedCache
 import com.android.volley.toolbox.HurlStack
-import com.android.volley.toolbox.Volley
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
+import java.util.concurrent.Executor
 
 /**
  * Created by IvanVatov on 8/18/2017.
  */
-class VolleyNetworkClient(private val context: Context, private val headers: HashMap<String, String>?, private val maxCacheSizeInBytes: Int, private val threadPoolSize: Int) : NetworkClient {
+class VolleyNetworkClient(private val context: Context, private val headers: HashMap<String, String>?, private val maxCacheSizeInBytes: Int, private val threadPoolSize: Int, private val executor: Executor?) : NetworkClient {
 
     init {
         getRequestQueue()
@@ -48,7 +49,12 @@ class VolleyNetworkClient(private val context: Context, private val headers: Has
     private fun getRequestQueue(): RequestQueue? {
         if (requestQueue == null) {
 
-            requestQueue = RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize)
+            requestQueue = if (executor != null) {
+                RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize, ExecutorDelivery(executor))
+            } else {
+                RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize)
+            }
+
             requestQueue?.start()
 //            requestQueue = Volley.newRequestQueue(context)
         }
