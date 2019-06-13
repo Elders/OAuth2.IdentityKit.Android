@@ -56,9 +56,9 @@ class DefaultTokenStorage(val context: Context) : TokenStorage {
             val byteArray: ByteArray = value.toByteArray(charset(DEFAULT_CHARSET))
             cipher.init(Cipher.ENCRYPT_MODE, key)
             val encryptedBytes = cipher.doFinal(byteArray)
-            Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
+            Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
         } else {
-            val byteArray = Base64.decode(value, Base64.DEFAULT)
+            val byteArray = Base64.decode(value, Base64.NO_WRAP)
             cipher.init(Cipher.DECRYPT_MODE, key)
             val plainTextBytes =(cipher.doFinal(byteArray))
             plainTextBytes.toString(charset(DEFAULT_CHARSET))

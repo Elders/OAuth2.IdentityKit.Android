@@ -48,7 +48,7 @@ public class TestNetworkClient implements NetworkClient {
 
                 if (request.getMethod() == "POST"
                         && bodyString.equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
-                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==\n")) {
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
                         case OK200: {
                             callback.invoke(response200());
@@ -65,7 +65,7 @@ public class TestNetworkClient implements NetworkClient {
                     //refresh token response
                 } else if (request.getMethod() == "POST"
                         && bodyString.equalsIgnoreCase("grant_type=refresh_token&refresh_token=4f2aw4gf5ge0c3aa3as2e4f8a958c6")
-                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==\n")) {
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
                         case OK200: {
                             callback.invoke(response200());
@@ -86,7 +86,7 @@ public class TestNetworkClient implements NetworkClient {
                     //client credentials response
                 } else if (request.getMethod() == "POST"
                         && bodyString.equalsIgnoreCase("grant_type=client_credentials&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
-                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==\n")) {
+                        && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
                         case OK200: {
                             callback.invoke(response200());

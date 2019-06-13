@@ -58,7 +58,7 @@ public class BasicAuthorizerTest {
                 return null;
             }
         });
-        String responseAuthorization = "Basic " + Base64.encodeToString("clientid:clientsecret".getBytes(Charset.forName(DEFAULT_CHARSET)), Base64.DEFAULT);
+        String responseAuthorization = "Basic " + Base64.encodeToString("clientid:clientsecret".getBytes(Charset.forName(DEFAULT_CHARSET)), Base64.NO_WRAP);
         assertTrue(handler.value.equalsIgnoreCase(responseAuthorization));
     }
 }
