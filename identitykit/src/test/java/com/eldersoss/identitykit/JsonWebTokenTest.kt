@@ -1,0 +1,29 @@
+package com.eldersoss.identitykit
+
+import com.eldersoss.identitykit.jwt.JWTVerifier
+import com.eldersoss.identitykit.jwt.JsonWebToken
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@RunWith(RobolectricTestRunner::class)
+@Config(constants = BuildConfig::class)
+class JsonWebTokenTest {
+
+    @Test
+    fun initTestRS256() {
+        val verifier = JWTVerifier()
+        val token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik5EZ3dNalExUmpORk4wTkVSRE5FT1RKRk1qSkNRa1U0UmpNNU16VkdSVFJHTURRM01qazBOQSJ9.eyJuaWNrbmFtZSI6ImthbGluLnZlbmtvdiIsIm5hbWUiOiJrYWxpbi52ZW5rb3ZAZWxkZXJzb3NzLmNvbSIsInBpY3R1cmUiOiJodHRwczovL3MuZ3JhdmF0YXIuY29tL2F2YXRhci9iZTI5OWMwODBlNzEwMDY0MWIwY2FhYmMzM2QyMThjND9zPTQ4MCZyPXBnJmQ9aHR0cHMlM0ElMkYlMkZjZG4uYXV0aDAuY29tJTJGYXZhdGFycyUyRmthLnBuZyIsInVwZGF0ZWRfYXQiOiIyMDE5LTA4LTI2VDA5OjQ3OjAyLjY1OFoiLCJlbWFpbCI6ImthbGluLnZlbmtvdkBlbGRlcnNvc3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vc3Ryb3dyLWRldmVsb3BtZW50LmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJhdXRoMHw1YzU0NjI1ZDc1ZWIwMjA5NmZkYzM3MzciLCJhdWQiOiJrSVFNNm01dnRQOG0xc2ZwWDdaTTdaYXZLZzJKeTQ1YyIsImlhdCI6MTU2NjgxMjgyMiwiZXhwIjoxNTY2ODQ4ODIyfQ.WoWkolcIL3NWLDfDEM13lk0w9b6tt7FPpR7OZecf9uMM4ryzGE0OMLY5nCUH-5UnDpt1CwQFIhI6xBggY9sY7GGIjXrEXkjT2vzDmZd_iWYbTGyqC2BZZUzQYztaEk5DtAVp-IRAJO_uS1sMT06QiPUFrhMEh2kWbD4O62hDPcHiCbY3LoiQv4Esuh4geARn9H0dqriWXv2pmrmwwTGV3jcNA049bpUbhkMAiFx4LHVBSkbQr2cEpwIkod9dNjh2H4evILFLeYOI_PHhmeTbeQkHBZtQZUhYTOap8wxZjrQmVFupwJ7ZOJSi8SLagJxmI5qVBjMgOFiSocXBQPtkHA"
+        val jwt = JsonWebToken(token)
+        assert(verifier.verify(jwt))
+    }
+
+    @Test
+    fun initTestHS256() {
+        val verifier = JWTVerifier()
+        val token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuaWNrbmFtZSI6ImthbGluLnZlbmtvdiIsIm5hbWUiOiJrYWxpbi52ZW5rb3ZAZWxkZXJzb3NzLmNvbSIsInBpY3R1cmUiOiJodHRwczovL3MuZ3JhdmF0YXIuY29tL2F2YXRhci9iZTI5OWMwODBlNzEwMDY0MWIwY2FhYmMzM2QyMThjND9zPTQ4MCZyPXBnJmQ9aHR0cHMlM0ElMkYlMkZjZG4uYXV0aDAuY29tJTJGYXZhdGFycyUyRmthLnBuZyIsInVwZGF0ZWRfYXQiOiIyMDE5LTA4LTI2VDEzOjA3OjEwLjE5N1oiLCJlbWFpbCI6ImthbGluLnZlbmtvdkBlbGRlcnNvc3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzcyI6Imh0dHBzOi8vc3Ryb3dyLWRldmVsb3BtZW50LmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJhdXRoMHw1YzU0NjI1ZDc1ZWIwMjA5NmZkYzM3MzciLCJhdWQiOiJrRkI0NjdLejg4N1lOSmNRT0dHc3pqY2tETTNHWURsOSIsImlhdCI6MTU2NjgyNDgzMCwiZXhwIjoxNTY2ODYwODMwfQ.ZMS-DNF-ygP-f-EPKhb7noY-t7FHJjtnDQ-uF8L4FoQ"
+        val jwt = JsonWebToken(token)
+        assert(verifier.verify(jwt))
+    }
+}
