@@ -16,14 +16,10 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
-import android.net.Uri
 import com.eldersoss.identitykit.CredentialsProvider
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.authorizeAndPerform
-import com.eldersoss.identitykit.network.DEFAULT_CHARSET
-import com.eldersoss.identitykit.network.NetworkClient
-import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.network.NetworkResponse
+import com.eldersoss.identitykit.network.*
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">Client Credentials Grant</a>
@@ -41,8 +37,15 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
      */
     override fun authenticate(callback: (NetworkResponse) -> Unit) {
         credentialsProvider.provideCredentials { username, password ->
-            val uriScope = Uri.encode(scope)
-            val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), "grant_type=password&username=$username&password=$password&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
+
+            val params = ParamsBuilder()
+                    .add("grant_type", "password")
+                    .add("username", username)
+                    .add("password", password)
+                    .add("scope", scope)
+                    .build()
+
+            val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
             authorizer.authorizeAndPerform(request, networkClient, callback)
         }
     }
