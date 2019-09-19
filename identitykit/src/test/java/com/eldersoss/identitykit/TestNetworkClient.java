@@ -47,7 +47,7 @@ public class TestNetworkClient implements NetworkClient {
                 }
 
                 if (request.getMethod() == "POST"
-                        && bodyString.equalsIgnoreCase("grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
+                        && bodyString.equalsIgnoreCase("grant_type=password&username=gg%40eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
                         && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
                         case OK200: {

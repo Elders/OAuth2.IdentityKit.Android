@@ -16,13 +16,9 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
-import android.net.Uri
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.authorizeAndPerform
-import com.eldersoss.identitykit.network.DEFAULT_CHARSET
-import com.eldersoss.identitykit.network.NetworkClient
-import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.network.NetworkResponse
+import com.eldersoss.identitykit.network.*
 import com.eldersoss.identitykit.oauth2.OAuth2Error
 
 /**
@@ -39,18 +35,23 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
      * @param callback - callback function with NetworkResponse
      */
     override fun authenticate(callback: (NetworkResponse) -> Unit) {
-        val uriScope = Uri.encode(scope)
-        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), "grant_type=client_credentials&scope=$uriScope".toByteArray(charset(DEFAULT_CHARSET)))
+
+        val params = ParamsBuilder()
+                .add("grant_type", "client_credentials")
+                .add("scope", scope)
+                .build()
+
+        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
         authorizer.authorizeAndPerform(request, networkClient
                 // validate response
         ) { networkResponse -> validateResponse(networkResponse, callback) }
     }
 
-    private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit){
+    private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit) {
         if (networkResponse.getJson() != null) {
             val jsonObject = networkResponse.getJson()
             val refreshToken = jsonObject?.optString("refresh_token", null)
-            if (refreshToken != null){
+            if (refreshToken != null) {
                 networkResponse.error = OAuth2Error.INVALID_TOKEN_RESPONSE
             }
         }
