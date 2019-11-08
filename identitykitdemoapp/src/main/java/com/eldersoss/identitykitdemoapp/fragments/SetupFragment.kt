@@ -72,7 +72,7 @@ class SetupFragment : Fragment() {
 
     private fun initIdentityKit(): IdentityKit {
         val configuration = KitConfiguration(true, true, true)
-        val client = VolleyNetworkClient(context!!, null, 0, 12, Executors.newSingleThreadExecutor())
+        val client = VolleyNetworkClient(context!!, null, 0, 12, Executors.newSingleThreadExecutor(), 60000)
         val authorizer = BasicAuthorizer(clientEditText?.text.toString(), secretEditText?.text.toString())
         val flow = ResourceOwnerFlow(tokenUrlEditText?.text.toString(), credentialsProvider!!, scopeEditText?.text.toString(), authorizer, client)
         return IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher(tokenUrlEditText?.text.toString(), client, authorizer), DefaultTokenStorage(context!!), client)
