@@ -34,13 +34,13 @@ ext {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 28
-        versionCode 38
-        versionName "0.8.4" // Change libraryVersion too
+        targetSdkVersion 29
+        versionCode 39
+        versionName "0.8.5" // Change libraryVersion too
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
