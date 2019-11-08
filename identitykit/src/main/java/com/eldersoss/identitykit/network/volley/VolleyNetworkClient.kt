@@ -22,15 +22,17 @@ class VolleyNetworkClient : NetworkClient {
 
     private val requestQueue: RequestQueue
     private val headers: HashMap<String, String>?
+    private val initialTimeoutMs : Int
 
-    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(Handler(Looper.getMainLooper())))
+    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, timeoutMs: Int) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(Handler(Looper.getMainLooper())), timeoutMs)
 
-    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, executor: Executor) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(executor))
+    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, executor: Executor, timeoutMs: Int) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(executor), timeoutMs)
 
-    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, executorDelivery: ExecutorDelivery) {
+    constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, executorDelivery: ExecutorDelivery, timeoutMs: Int) {
         this.headers = headers
         requestQueue = RequestQueue(DiskBasedCache(context.cacheDir, maxCacheSizeInBytes), BasicNetwork(HurlStack()), threadPoolSize, executorDelivery)
         requestQueue.start()
+        initialTimeoutMs = timeoutMs
     }
 
     override fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
@@ -51,7 +53,7 @@ class VolleyNetworkClient : NetworkClient {
             mergedHeaders.putAll(headers)
         }
         val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), mergedHeaders, request.body, callback)
-        volleyRequest.retryPolicy = DefaultRetryPolicy(30000, 1, 1f)
+        volleyRequest.retryPolicy = DefaultRetryPolicy(initialTimeoutMs, 1, 1f)
         requestQueue.add(volleyRequest)
     }
 }
