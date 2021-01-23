@@ -99,10 +99,15 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
         }
     }
 
-    fun revokeAuthentication() {
+    fun revokeAuthentication(callback: (() -> Unit)? = null) {
         val runnable = Runnable {
             storage?.let { storage.delete(REFRESH_TOKEN) }
             this._token = null
+
+            callback?.let {
+
+                it()
+            }
         }
         executor.execute(runnable)
     }
