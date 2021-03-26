@@ -46,7 +46,7 @@ public class TestNetworkClient implements NetworkClient {
                     e.printStackTrace();
                 }
 
-                if (request.getMethod() == "POST"
+                if (request.getMethod() == NetworkRequest.Method.POST
                         && bodyString.equalsIgnoreCase("grant_type=password&username=gg%40eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
                         && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
@@ -63,7 +63,7 @@ public class TestNetworkClient implements NetworkClient {
                         }
                     }
                     //refresh token response
-                } else if (request.getMethod() == "POST"
+                } else if (request.getMethod() == NetworkRequest.Method.POST
                         && bodyString.equalsIgnoreCase("grant_type=refresh_token&refresh_token=4f2aw4gf5ge0c3aa3as2e4f8a958c6")
                         && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
@@ -84,7 +84,7 @@ public class TestNetworkClient implements NetworkClient {
                         }
                     }
                     //client credentials response
-                } else if (request.getMethod() == "POST"
+                } else if (request.getMethod() == NetworkRequest.Method.POST
                         && bodyString.equalsIgnoreCase("grant_type=client_credentials&scope=read%20write%20openid%20email%20profile%20offline_access%20owner")
                         && request.getHeaders().get("Authorization").equalsIgnoreCase("Basic Y2xpZW50OnNlY3JldA==")) {
                     switch (responseCase) {
@@ -105,7 +105,7 @@ public class TestNetworkClient implements NetworkClient {
                         }
                     }
                     // Profile response
-                } else if (request.getMethod() == "GET"
+                } else if (request.getMethod() == NetworkRequest.Method.POST
                         && request.getHeaders().get("Authorization").equalsIgnoreCase("Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9")) {
                     callback.invoke(responseProfile());
                     // Network error response

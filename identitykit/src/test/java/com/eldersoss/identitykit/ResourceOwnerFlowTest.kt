@@ -12,15 +12,12 @@ import junit.framework.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import java.util.HashMap
 
 /**
  * Created by IvanVatov on 11/7/2017.
  */
 
 @RunWith(RobolectricTestRunner::class)
-@Config(constants = BuildConfig::class)
 class ResourceOwnerFlowTest {
 
     private val configuration = KitConfiguration(false, false, false)
@@ -35,7 +32,7 @@ class ResourceOwnerFlowTest {
         val flow = ResourceOwnerFlow("https://account.foo.bar/token", TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient)
         kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
-        kit.authorizeAndExecute(NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", HashMap(), "".toByteArray())) { null }
+        kit.authorizeAndExecute(NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile")) { null }
         assertTrue(kit != null)
     }
 
@@ -55,7 +52,7 @@ class ResourceOwnerFlowTest {
             val flow = ResourceOwnerFlow("https://account.foo.bar/token", TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient)
             kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
-            val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
+            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
             kit.authorize(request) { networkRequest, error ->
                 handler.value = networkRequest.headers["Authorization"]
                 completion()
@@ -81,7 +78,7 @@ class ResourceOwnerFlowTest {
             val flow = ResourceOwnerFlow("https://account.foo.bar/token", TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient)
             kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
-            val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
+            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
             kit.authorize(request) { networkRequest, error ->
                 handler.error = error
                 completion()
@@ -109,7 +106,7 @@ class ResourceOwnerFlowTest {
             val flow = ResourceOwnerFlow("https://account.foo.bar/token", TestCredentialsProvider(), "read write openid email profile offline_access owner", authorizer, networkClient)
             kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), tokenStorage, networkClient)
 
-            val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
+            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
             kit.authorize(request) { networkRequest, error ->
                 handler.value = networkRequest.headers["Authorization"]
                 completion()

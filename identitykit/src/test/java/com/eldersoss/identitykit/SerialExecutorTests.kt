@@ -11,7 +11,6 @@ import org.robolectric.annotation.Config
  */
 
 @RunWith(RobolectricTestRunner::class)
-@Config(constants = BuildConfig::class)
 class SerialExecutorTests {
 
     val serialExecutor = SerialTaskExecutor()

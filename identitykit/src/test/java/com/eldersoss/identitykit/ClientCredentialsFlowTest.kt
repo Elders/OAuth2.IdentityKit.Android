@@ -8,18 +8,15 @@ import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.oauth2.OAuth2Error
 import com.eldersoss.identitykit.oauth2.flows.ClientCredentialsFlow
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
-import junit.framework.Assert.assertTrue
+import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import java.util.HashMap
 
 /**
  * Created by IvanVatov on 11/7/2017.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(constants = BuildConfig::class)
 class ClientCredentialsFlowTest {
 
     private val mainLock = java.lang.Object()
@@ -36,8 +33,8 @@ class ClientCredentialsFlowTest {
         val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
         kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
-        kit.authorizeAndExecute(NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", HashMap(), "".toByteArray())) { null }
-        assertTrue(kit != null)
+        kit.authorizeAndExecute(NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile")) { null }
+        Assert.assertTrue(kit != null)
     }
 
     /**
@@ -58,7 +55,7 @@ class ClientCredentialsFlowTest {
             val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
             kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
-            val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
+            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
             kit.authorize(request) { networkRequest, error ->
                 handler.value = networkRequest.headers["Authorization"]
                 null
@@ -71,7 +68,7 @@ class ClientCredentialsFlowTest {
         workerThread.join()
 
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
-        assertTrue(handler.value.equals(responseAuthorization))
+        Assert.assertTrue(handler.value.equals(responseAuthorization))
     }
 
     @Test
@@ -91,7 +88,7 @@ class ClientCredentialsFlowTest {
             val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
             kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
 
-            val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
+            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
             kit.authorize(request) { networkRequest, error ->
                 handler.error = error
                 null
@@ -103,7 +100,7 @@ class ClientCredentialsFlowTest {
 
         workerThread.start()
         workerThread.join()
-        assertTrue(handler.error == OAuth2Error.INVALID_GRAND)
+        Assert.assertTrue(handler.error == OAuth2Error.INVALID_GRAND)
     }
 
     /**
@@ -126,7 +123,7 @@ class ClientCredentialsFlowTest {
             val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
             kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), tokenStorage, networkClient)
 
-            val request = NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile", HashMap(), "".toByteArray())
+            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
             kit.authorize(request) { networkRequest, error ->
                 handler.value = networkRequest.headers["Authorization"]
                 null
@@ -139,7 +136,7 @@ class ClientCredentialsFlowTest {
         workerThread.join()
 
         val responseAuthorization = "Bearer TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"
-        assertTrue(handler.value.equals(responseAuthorization))
+        Assert.assertTrue(handler.value.equals(responseAuthorization))
     }
 
 }
