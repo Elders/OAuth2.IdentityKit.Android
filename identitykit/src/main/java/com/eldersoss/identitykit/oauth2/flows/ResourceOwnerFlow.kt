@@ -45,7 +45,7 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
                     .add("scope", scope)
                     .build()
 
-            val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
+            val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
             authorizer.authorizeAndPerform(request, networkClient, callback)
         }
     }

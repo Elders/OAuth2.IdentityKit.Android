@@ -52,11 +52,11 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
 
     private fun headerAuthorization(request: NetworkRequest) {
         val accessToken = token.accessToken
-        request.headers.put("Authorization", "Bearer $accessToken")
+        request.headers["Authorization"] = "Bearer $accessToken"
     }
 
     private fun bodyAuthorization(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit) {
-        if (request.method != "GET") {
+        if (request.method != NetworkRequest.Method.GET) {
             handler(request, AuthorizationError.INVALID_METHOD)
             return
         }
@@ -66,8 +66,8 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
         }
         val accessToken = token.accessToken
         var authorizedBody = ""
-        if (request.body.isNotEmpty()) {
-            authorizedBody = request.body.toString(charset(DEFAULT_CHARSET)) + "&"
+        if (request.body?.isNotEmpty() == true) {
+            authorizedBody = request.body?.toString(charset(DEFAULT_CHARSET)) + "&"
         }
         authorizedBody += "access_token=$accessToken"
         request.body = authorizedBody.toByteArray(charset(DEFAULT_CHARSET))

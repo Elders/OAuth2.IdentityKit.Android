@@ -18,6 +18,7 @@ package com.eldersoss.identitykit.oauth2.flows
 
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.authorizeAndPerform
+import com.eldersoss.identitykit.ext.getOptString
 import com.eldersoss.identitykit.network.*
 import com.eldersoss.identitykit.oauth2.OAuth2Error
 
@@ -41,7 +42,7 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
                 .add("scope", scope)
                 .build()
 
-        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
+        val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
         authorizer.authorizeAndPerform(request, networkClient
                 // validate response
         ) { networkResponse -> validateResponse(networkResponse, callback) }
@@ -50,7 +51,7 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
     private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit) {
         if (networkResponse.getJson() != null) {
             val jsonObject = networkResponse.getJson()
-            val refreshToken = jsonObject?.optString("refresh_token", null)
+            val refreshToken = jsonObject?.getOptString("refresh_token")
             if (refreshToken != null) {
                 networkResponse.error = OAuth2Error.INVALID_TOKEN_RESPONSE
             }

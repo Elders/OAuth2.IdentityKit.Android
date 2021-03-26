@@ -22,7 +22,7 @@ class VolleyNetworkClient : NetworkClient {
 
     private val requestQueue: RequestQueue
     private val headers: HashMap<String, String>?
-    private val initialTimeoutMs : Int
+    private val initialTimeoutMs: Int
 
     constructor(context: Context, headers: HashMap<String, String>?, maxCacheSizeInBytes: Int, threadPoolSize: Int, timeoutMs: Int) : this(context, headers, maxCacheSizeInBytes, threadPoolSize, ExecutorDelivery(Handler(Looper.getMainLooper())), timeoutMs)
 
@@ -37,22 +37,11 @@ class VolleyNetworkClient : NetworkClient {
 
     override fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit) {
 
-        val method = when (request.method) {
-            "GET" -> 0
-            "POST" -> 1
-            "PUT" -> 2
-            "DELETE" -> 3
-            "HEAD" -> 4
-            "OPTIONS" -> 5
-            "TRACE" -> 6
-            "PATCH" -> 7
-            else -> -1
-        }
         val mergedHeaders = request.headers
         if (headers != null) {
             mergedHeaders.putAll(headers)
         }
-        val volleyRequest = VolleyRequest(request, method, request.url, Response.ErrorListener({}), mergedHeaders, request.body, callback)
+        val volleyRequest = VolleyRequest(request, request.method.value, request.url, {}, mergedHeaders, request.body, callback)
         volleyRequest.retryPolicy = DefaultRetryPolicy(initialTimeoutMs, 1, 1f)
         requestQueue.add(volleyRequest)
     }

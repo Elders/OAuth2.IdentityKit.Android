@@ -17,6 +17,7 @@
 package com.eldersoss.identitykit.oauth2
 
 import com.eldersoss.identitykit.Error
+import com.eldersoss.identitykit.ext.getOptString
 import com.eldersoss.identitykit.getError
 import com.eldersoss.identitykit.network.NetworkResponse
 
@@ -43,9 +44,8 @@ fun parseToken(networkResponse: NetworkResponse, callback: (Token?, Error?) -> U
                                 it.getString("token_type"),
                                 (System.currentTimeMillis() / 1000) + it.getLong("expires_in"),
                                 //optional fields
-                                it.optString("refresh_token", null),
-                                it.optString("scope", null
-                                )
+                                it.getOptString("refresh_token"),
+                                it.getOptString("scope")
                         ), null
 
                 )
