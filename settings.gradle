@@ -1,1 +1,1 @@
-include ':identitykit', ':identitykitdemoapp'
+include ':identitykit'

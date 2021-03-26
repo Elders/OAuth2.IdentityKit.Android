@@ -25,7 +25,6 @@ import com.eldersoss.identitykit.network.NetworkRequest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -41,7 +40,6 @@ import static org.junit.Assert.assertTrue;
  */
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class)
 public class BasicAuthorizerTest {
 
 
@@ -51,7 +49,7 @@ public class BasicAuthorizerTest {
         final TestResultHandler handler = new TestResultHandler();
 
         Authorizer authorizer = new BasicAuthorizer("clientid", "clientsecret");
-        authorizer.authorize(new NetworkRequest("GET", NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
+        authorizer.authorize(new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
             @Override
             public Unit invoke(NetworkRequest networkRequest, Error error) {
                 handler.value = networkRequest.getHeaders().get("Authorization");

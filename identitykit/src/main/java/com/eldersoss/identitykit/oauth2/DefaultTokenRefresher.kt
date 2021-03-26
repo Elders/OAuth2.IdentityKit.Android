@@ -35,7 +35,7 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
             body += "&scope=$uriScope"
         }
 
-        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), body.toByteArray(Charset.defaultCharset()))
+        val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), body.toByteArray(Charset.defaultCharset()))
         authorizer.authorize(request) { networkRequest, _ ->
             // Execute request
             networkClient.execute(networkRequest) { networkResponse ->

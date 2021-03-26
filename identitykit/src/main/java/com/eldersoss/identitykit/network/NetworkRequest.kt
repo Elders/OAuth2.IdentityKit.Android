@@ -20,13 +20,22 @@ import kotlin.collections.HashMap
 
 /**
  * Sample network request, the library have ability to authorize this type of network request
- * @property method String request method.
+ * @property method NetworkRequest.Method.
  * @property url String url address
  * @property headers key, value HashMap of headers
  * @property body usually UTF-8 encoded
  * @constructor Network request
  */
-open class NetworkRequest(val method: String, val priority: Priority, var url: String, var headers: HashMap<String, String>, var body: ByteArray) {
+open class NetworkRequest(val method: Method, val priority: Priority, var url: String, var headers: HashMap<String, String>, var body: ByteArray?) {
+
+    constructor(method: Method, priority: Priority, url: String) :
+            this(method, priority, url, HashMap(), null)
+
+    constructor(method: Method, priority: Priority, url: String, headers: HashMap<String, String>) :
+            this(method, priority, url, headers, null)
+
+    constructor(method: Method, priority: Priority, url: String, body: ByteArray) :
+            this(method, priority, url, HashMap(), body)
 
     var bodyContentType = BODY_CONTENT_TYPE
 
@@ -37,6 +46,17 @@ open class NetworkRequest(val method: String, val priority: Priority, var url: S
         NORMAL,
         HIGH,
         IMMEDIATE
+    }
+
+    enum class Method(val value: Int) {
+        GET(0),
+        POST(1),
+        PUT(2),
+        DELETE(3),
+        HEAD(4),
+        OPTIONS(5),
+        TRACE(6),
+        PATCH(7)
     }
 }
 
