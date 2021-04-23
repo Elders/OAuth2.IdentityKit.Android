@@ -22,5 +22,6 @@ import com.eldersoss.identitykit.network.NetworkResponse
  * Created by IvanVatov on 8/17/2017.
  */
 interface AuthorizationFlow {
-    fun authenticate(callback: (NetworkResponse) -> Unit)
+
+    suspend fun authenticate() : NetworkResponse
 }

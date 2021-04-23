@@ -21,10 +21,13 @@ package com.eldersoss.identitykit
  */
 
 typealias Credentials = (username: String, password: String) -> Unit
+typealias Username = String
+typealias Password = String
 
 /**
  * Required for Bearer authorization
  */
 interface CredentialsProvider {
+
     fun provideCredentials(handler: Credentials)
 }

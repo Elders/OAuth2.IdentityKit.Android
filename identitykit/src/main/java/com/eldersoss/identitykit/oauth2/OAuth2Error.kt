@@ -22,7 +22,7 @@ import com.eldersoss.identitykit.Error
 /**
  * Created by IvanVatov on 8/17/2017.
  */
-enum class OAuth2Error : Error {
+internal enum class OAuth2Error : Error {
     // OAuth2 errors
     INVALID_REQUEST,
     INVALID_CLIENT,

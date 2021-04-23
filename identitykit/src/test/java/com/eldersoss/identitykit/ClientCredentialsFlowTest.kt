@@ -2,12 +2,15 @@ package com.eldersoss.identitykit
 
 import com.eldersoss.identitykit.authorization.BasicAuthorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
+import com.eldersoss.identitykit.exceptions.OAuth2Exception
+import com.eldersoss.identitykit.exceptions.OAuth2InvalidGrand
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
-import com.eldersoss.identitykit.oauth2.OAuth2Error
 import com.eldersoss.identitykit.oauth2.flows.ClientCredentialsFlow
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,24 +19,48 @@ import org.robolectric.RobolectricTestRunner
 /**
  * Created by IvanVatov on 11/7/2017.
  */
+@ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 class ClientCredentialsFlowTest {
 
-    private val mainLock = java.lang.Object()
-
-    private val configuration = KitConfiguration(false, false, false)
+    private val configuration = KitConfiguration(
+        retryFlowAuthentication = false,
+        authenticateOnFailedRefresh = false,
+        onAuthenticationRetryInvokeCallbackWithFailure = false
+    )
 
     @Test
-    fun identityKitInitializationTest() {
+    fun identityKitInitializationTest() = runBlockingTest {
         val kit: IdentityKit?
         val networkClient: NetworkClient
 
-        networkClient = TestNetworkClient()
-        val authorizer = BasicAuthorizer("client", "secret")
-        val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-        kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
+        networkClient = MockNetworkClient()
+        networkClient.setCase(MockNetworkClient.ResponseCase.CC200OK)
 
-        kit.authorizeAndExecute(NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile")) { null }
+        val authorizer = BasicAuthorizer("client", "secret")
+        val flow = ClientCredentialsFlow(
+            "https://account.foo.bar/token",
+            "read write openid email profile offline_access owner",
+            authorizer,
+            networkClient
+        )
+
+        kit = IdentityKit(
+            configuration,
+            flow,
+            BearerAuthorizer.Method.HEADER,
+            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
+            TestTokenStorage(),
+            networkClient
+        )
+        kit.authorizeAndExecute(
+            NetworkRequest(
+                NetworkRequest.Method.GET,
+                NetworkRequest.Priority.HIGH,
+                "https://account.foo.bar/profile"
+            )
+        )
+
         Assert.assertTrue(kit != null)
     }
 
@@ -41,102 +68,128 @@ class ClientCredentialsFlowTest {
      * Unit test on asynchronous implementation in this depth cannot be provided by currently available test instruments
      */
     @Test
-    fun successAuthorizeTest() {
+    fun successAuthorizeTest() = runBlockingTest {
 
-        val handler = TestResultHandler()
+        val kit: IdentityKit
+        val networkClient: NetworkClient
+        networkClient = MockNetworkClient()
+        networkClient.setCase(MockNetworkClient.ResponseCase.CC200OK)
 
-        val workerThread = Thread {
-            val kit: IdentityKit
-            val networkClient: NetworkClient
-            networkClient = TestNetworkClient()
-            networkClient.setCase(TestNetworkClient.ResponseCase.OK200)
+        val authorizer = BasicAuthorizer("client", "secret")
+        val flow = ClientCredentialsFlow(
+            "https://account.foo.bar/token",
+            "read write openid email profile offline_access owner",
+            authorizer,
+            networkClient
+        )
+        kit = IdentityKit(
+            configuration,
+            flow,
+            BearerAuthorizer.Method.HEADER,
+            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
+            TestTokenStorage(),
+            networkClient
+        )
 
-            val authorizer = BasicAuthorizer("client", "secret")
-            val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-            kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
+        val request = NetworkRequest(
+            NetworkRequest.Method.GET,
+            NetworkRequest.Priority.HIGH,
+            "https://account.foo.bar/api/profile"
+        )
 
-            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
-            kit.authorize(request) { networkRequest, error ->
-                handler.value = networkRequest.headers["Authorization"]
-                null
-            }
-            synchronized(mainLock) {
-                mainLock.wait(1000)
-            }
-        }
-        workerThread.start()
-        workerThread.join()
+        kit.authorize(request)
 
+        val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
-        Assert.assertTrue(handler.value.equals(responseAuthorization))
+
+        Assert.assertTrue(authHeaderValue.equals(responseAuthorization))
     }
 
     @Test
-    fun invalidGrandTest() {
+    fun invalidGrandTest() = runBlockingTest {
 
-        val handler = TestResultHandler()
+        val kit: IdentityKit
+        val networkClient: NetworkClient
+        networkClient = MockNetworkClient()
+        networkClient.setCase(MockNetworkClient.ResponseCase.BAD400)
 
-        val workerThread = Thread {
+        // building IdentityKit
+        val authorizer = BasicAuthorizer("client", "secret")
+        val flow = ClientCredentialsFlow(
+            "https://account.foo.bar/token",
+            "read write openid email profile offline_access owner",
+            authorizer,
+            networkClient
+        )
+        kit = IdentityKit(
+            configuration,
+            flow,
+            BearerAuthorizer.Method.HEADER,
+            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
+            TestTokenStorage(),
+            networkClient
+        )
 
-            val kit: IdentityKit
-            val networkClient: NetworkClient
-            networkClient = TestNetworkClient()
-            networkClient.setCase(TestNetworkClient.ResponseCase.BAD400)
+        val request = NetworkRequest(
+            NetworkRequest.Method.GET,
+            NetworkRequest.Priority.HIGH,
+            "https://account.foo.bar/api/profile"
+        )
 
-            // building IdentityKit
-            val authorizer = BasicAuthorizer("client", "secret")
-            val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-            kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), TestTokenStorage(), networkClient)
+        var oauth2Exception: OAuth2Exception? = null
 
-            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
-            kit.authorize(request) { networkRequest, error ->
-                handler.error = error
-                null
-            }
-            synchronized(mainLock) {
-                mainLock.wait(1000)
-            }
+        try {
+
+            kit.authorize(request)
+        } catch (e: OAuth2InvalidGrand) {
+
+            oauth2Exception = e
         }
 
-        workerThread.start()
-        workerThread.join()
-        Assert.assertTrue(handler.error == OAuth2Error.INVALID_GRAND)
+        Assert.assertTrue(oauth2Exception is OAuth2InvalidGrand)
     }
 
     /**
      * Unit test on asynchronous implementation in this depth cannot be provided by currently available test instruments
      */
     @Test
-    fun refreshToken() {
+    fun refreshToken() = runBlockingTest {
 
-        val handler = TestResultHandler()
+        val kit: IdentityKit
+        val networkClient: NetworkClient
+        val tokenStorage = TestTokenStorage()
+        networkClient = MockNetworkClient()
+        tokenStorage.write(REFRESH_TOKEN, "4f2aw4gf5ge0c3aa3as2e4f8a958c6")
+        networkClient.setCase(MockNetworkClient.ResponseCase.REFRESH200)
 
-        val workerThread = Thread {
-            val kit: IdentityKit
-            val networkClient: NetworkClient
-            val tokenStorage = TestTokenStorage()
-            networkClient = TestNetworkClient()
-            tokenStorage.write(REFRESH_TOKEN, "4f2aw4gf5ge0c3aa3as2e4f8a958c6")
-            networkClient.setCase(TestNetworkClient.ResponseCase.REFRESH200)
+        val authorizer = BasicAuthorizer("client", "secret")
+        val flow = ClientCredentialsFlow(
+            "https://account.foo.bar/token",
+            "read write openid email profile offline_access owner",
+            authorizer,
+            networkClient
+        )
+        kit = IdentityKit(
+            configuration,
+            flow,
+            BearerAuthorizer.Method.HEADER,
+            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
+            tokenStorage,
+            networkClient
+        )
 
-            val authorizer = BasicAuthorizer("client", "secret")
-            val flow = ClientCredentialsFlow("https://account.foo.bar/token", "read write openid email profile offline_access owner", authorizer, networkClient)
-            kit = IdentityKit(configuration, flow, BearerAuthorizer.Method.HEADER, DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer), tokenStorage, networkClient)
+        val request = NetworkRequest(
+            NetworkRequest.Method.GET,
+            NetworkRequest.Priority.HIGH,
+            "https://account.foo.bar/api/profile"
+        )
 
-            val request = NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/api/profile")
-            kit.authorize(request) { networkRequest, error ->
-                handler.value = networkRequest.headers["Authorization"]
-                null
-            }
-            synchronized(mainLock) {
-                mainLock.wait(1000)
-            }
-        }
-        workerThread.start()
-        workerThread.join()
+        kit.authorize(request)
 
+        val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"
-        Assert.assertTrue(handler.value.equals(responseAuthorization))
+
+        Assert.assertTrue(authHeaderValue.equals(responseAuthorization))
     }
 
 }

@@ -21,7 +21,6 @@ import com.eldersoss.identitykit.network.BODY_CONTENT_TYPE
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.Token
-import com.eldersoss.identitykit.Error
 
 /**
  * Authorize requests using access token
@@ -39,41 +38,48 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
     /**
      * Authorize requests
      * @param request - request for authorization
-     * @param handler - callback function that return authorized request
-      */
-    override fun authorize(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit) {
+     */
+    override fun authorize(request: NetworkRequest) {
+
         when (method) {
             Method.HEADER -> headerAuthorization(request)
-            Method.BODY -> bodyAuthorization(request, handler)
+            Method.BODY -> bodyAuthorization(request)
             Method.QUERY -> queryAuthorization(request)
         }
-        handler(request, null)
     }
 
     private fun headerAuthorization(request: NetworkRequest) {
+
         val accessToken = token.accessToken
         request.headers["Authorization"] = "Bearer $accessToken"
     }
 
-    private fun bodyAuthorization(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit) {
+    private fun bodyAuthorization(request: NetworkRequest) {
+
         if (request.method != NetworkRequest.Method.GET) {
-            handler(request, AuthorizationError.INVALID_METHOD)
-            return
+
+            throw Throwable(AuthorizationError.INVALID_METHOD.getMessage())
         }
+
         if (request.bodyContentType != BODY_CONTENT_TYPE) {
-            handler(request, AuthorizationError.INVALID_CONTENT_TYPE)
-            return
+
+            throw Throwable(AuthorizationError.INVALID_CONTENT_TYPE.getMessage())
         }
+
         val accessToken = token.accessToken
         var authorizedBody = ""
+
         if (request.body?.isNotEmpty() == true) {
+
             authorizedBody = request.body?.toString(charset(DEFAULT_CHARSET)) + "&"
         }
+
         authorizedBody += "access_token=$accessToken"
         request.body = authorizedBody.toByteArray(charset(DEFAULT_CHARSET))
     }
 
     private fun queryAuthorization(request: NetworkRequest) {
+
         val accessToken = token.accessToken
         var authorizedUrl : String= request.url
         authorizedUrl += if (request.url.contains("/?")){

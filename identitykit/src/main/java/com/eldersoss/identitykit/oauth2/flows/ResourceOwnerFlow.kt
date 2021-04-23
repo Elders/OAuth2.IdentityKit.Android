@@ -17,9 +17,17 @@
 package com.eldersoss.identitykit.oauth2.flows
 
 import com.eldersoss.identitykit.CredentialsProvider
+import com.eldersoss.identitykit.Password
+import com.eldersoss.identitykit.Username
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.authorizeAndPerform
 import com.eldersoss.identitykit.network.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">Client Credentials Grant</a>
@@ -33,10 +41,30 @@ import com.eldersoss.identitykit.network.*
 class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: CredentialsProvider, val scope: String, val authorizer: Authorizer, val networkClient: NetworkClient) : AuthorizationFlow {
     /**
      * Build and execute request for authentication
-     * @param callback - callback function with NetworkResponse
      */
-    override fun authenticate(callback: (NetworkResponse) -> Unit) {
-        credentialsProvider.provideCredentials { username, password ->
+    override suspend fun authenticate(): NetworkResponse {
+
+        val credentials = getCredentials()
+
+        val params = ParamsBuilder()
+            .add("grant_type", "password")
+            .add("username", credentials.first)
+            .add("password", credentials.second)
+            .add("scope", scope)
+            .build()
+
+        val request = NetworkRequest(
+            NetworkRequest.Method.POST,
+            NetworkRequest.Priority.IMMEDIATE,
+            tokenEndPoint,
+            HashMap(),
+            params.toByteArray(charset(DEFAULT_CHARSET))
+        )
+
+
+        return authorizer.authorizeAndPerform(request, networkClient)
+
+        /*credentialsProvider.provideCredentials { username, password ->
 
             val params = ParamsBuilder()
                     .add("grant_type", "password")
@@ -46,7 +74,25 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
                     .build()
 
             val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
-            authorizer.authorizeAndPerform(request, networkClient, callback)
+            authorizer.authorizeAndPerform(request, networkClient)
+        }*/
+    }
+
+    private suspend fun getCredentials(): Pair<Username, Password> {
+
+        return suspendCoroutine { continuation ->
+
+            try {
+
+                credentialsProvider.provideCredentials { username, password ->
+
+                    continuation.resumeWith(Result.success(Pair(username, password)))
+                }
+
+            } catch (e: Throwable) {
+
+                continuation.resumeWithException(e)
+            }
         }
     }
 }

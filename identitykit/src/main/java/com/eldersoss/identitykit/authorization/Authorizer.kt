@@ -17,7 +17,6 @@
 package com.eldersoss.identitykit.authorization
 
 import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.Error
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkResponse
 
@@ -25,14 +24,19 @@ import com.eldersoss.identitykit.network.NetworkResponse
  * Created by IvanVatov on 8/21/2017.
  */
 interface Authorizer {
-    fun authorize(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit)
+
+    fun authorize(request: NetworkRequest)
 }
 
 /**
  * Extension function to help execution of authentication request
  */
-fun Authorizer.authorizeAndPerform(request: NetworkRequest, networkClient: NetworkClient, callback: (NetworkResponse) -> Unit) {
-    this.authorize(request) { networkRequest: NetworkRequest, error ->
+suspend fun Authorizer.authorizeAndPerform(request: NetworkRequest, networkClient: NetworkClient): NetworkResponse {
+
+    authorize(request)
+    return networkClient.execute(request)
+
+   /* this.authorize(request) { networkRequest: NetworkRequest, error ->
         if (error == null) {
             networkClient.execute(networkRequest) { networkResponse ->
                 callback(networkResponse)
@@ -42,5 +46,5 @@ fun Authorizer.authorizeAndPerform(request: NetworkRequest, networkClient: Netwo
             errorResponse.error = error
             callback(errorResponse)
         }
-    }
+    }*/
 }

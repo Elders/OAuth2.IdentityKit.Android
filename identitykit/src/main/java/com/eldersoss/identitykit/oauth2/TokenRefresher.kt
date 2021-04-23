@@ -22,5 +22,6 @@ import com.eldersoss.identitykit.Error
  * Token refresher interface
  */
 interface TokenRefresher{
-    fun refresh(refreshToken: String, scope: String?, callback: (Token?, Error?) -> Unit)
+
+    suspend fun refresh(refreshToken: String, scope: String?): Token?
 }

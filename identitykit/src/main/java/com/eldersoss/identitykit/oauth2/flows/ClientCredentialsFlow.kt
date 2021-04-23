@@ -33,9 +33,8 @@ import com.eldersoss.identitykit.oauth2.OAuth2Error
 class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val authorizer: Authorizer, val networkClient: NetworkClient) : AuthorizationFlow {
     /**
      * Build and execute request for authentication
-     * @param callback - callback function with NetworkResponse
      */
-    override fun authenticate(callback: (NetworkResponse) -> Unit) {
+    override suspend fun authenticate(): NetworkResponse {
 
         val params = ParamsBuilder()
                 .add("grant_type", "client_credentials")
@@ -43,19 +42,24 @@ class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val au
                 .build()
 
         val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
-        authorizer.authorizeAndPerform(request, networkClient
-                // validate response
-        ) { networkResponse -> validateResponse(networkResponse, callback) }
+        val response = authorizer.authorizeAndPerform(request, networkClient)
+
+        validateResponse(response)
+
+        return response
     }
 
-    private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit) {
+    private fun validateResponse(networkResponse: NetworkResponse) {
+
         if (networkResponse.getJson() != null) {
+
             val jsonObject = networkResponse.getJson()
             val refreshToken = jsonObject?.getOptString("refresh_token")
+
             if (refreshToken != null) {
-                networkResponse.error = OAuth2Error.INVALID_TOKEN_RESPONSE
+
+                throw Throwable(OAuth2Error.INVALID_TOKEN_RESPONSE.getMessage())
             }
         }
-        callback(networkResponse)
     }
 }

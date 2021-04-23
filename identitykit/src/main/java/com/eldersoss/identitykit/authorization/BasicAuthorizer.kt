@@ -19,28 +19,27 @@ package com.eldersoss.identitykit.authorization
 import android.util.Base64
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.Error
 
 /**
- * Authorize requests using access token
+ * Authorize requests using username and password
  * @see <a href="https://tools.ietf.org/html/rfc6750#section-2">Authenticated Requests</a>
- * @property method - BearerAuthorizer.Method : HEADER, BODY or QUERY
- * @property token - Token used for authorization
+ * @property userName - Username used to authorize
+ * @property password - Password used to authorize
  * @constructor
  */
-class BasicAuthorizer(val userName : String, val password : String) : Authorizer {
+class BasicAuthorizer(private val userName : String, private val password : String) : Authorizer {
 
     /**
-     * Authorize requests
+     * Authorizes a request
      * @param request - request for authorization
-     * @param handler - callback function that return authorized request
      */
-    override fun authorize(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit){
-        request.headers.put("Authorization", "Basic " + encodeString("$userName:$password"))
-        handler(request, null)
+    override fun authorize(request: NetworkRequest) {
+
+        request.headers["Authorization"] = "Basic " + encodeString("$userName:$password")
     }
 
     private fun encodeString(str : String) : String{
+
         return Base64.encodeToString(str.toByteArray(charset(DEFAULT_CHARSET)), Base64.NO_WRAP)
     }
 }

@@ -29,9 +29,6 @@ import org.robolectric.RobolectricTestRunner;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function2;
-
 import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET;
 import static org.junit.Assert.assertTrue;
 
@@ -44,19 +41,19 @@ public class BasicAuthorizerTest {
 
 
     @Test
-    public void authorizationTest() throws Exception {
+    public void authorizationTest() throws NullPointerException{
 
-        final TestResultHandler handler = new TestResultHandler();
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH,
+                "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes());
 
         Authorizer authorizer = new BasicAuthorizer("clientid", "clientsecret");
-        authorizer.authorize(new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", new HashMap<String, String>(), "".getBytes()),new Function2<NetworkRequest, Error, Unit>() {
-            @Override
-            public Unit invoke(NetworkRequest networkRequest, Error error) {
-                handler.value = networkRequest.getHeaders().get("Authorization");
-                return null;
-            }
-        });
+        authorizer.authorize(request);
+
         String responseAuthorization = "Basic " + Base64.encodeToString("clientid:clientsecret".getBytes(Charset.forName(DEFAULT_CHARSET)), Base64.NO_WRAP);
-        assertTrue(handler.value.equalsIgnoreCase(responseAuthorization));
+
+        String authHeaderValue = request.getHeaders().getOrDefault("Authorization", null);
+
+        assert authHeaderValue != null;
+        assertTrue(authHeaderValue.equalsIgnoreCase(responseAuthorization));
     }
 }

@@ -17,7 +17,6 @@
 package com.eldersoss.identitykit.oauth2
 
 import android.net.Uri
-import com.eldersoss.identitykit.Error
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
@@ -28,7 +27,7 @@ import java.nio.charset.Charset
  */
 class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: NetworkClient, val authorizer: Authorizer) : TokenRefresher {
 
-    override fun refresh(refreshToken: String, scope: String?, callback: (Token?, Error?) -> Unit) {
+    override suspend fun refresh(refreshToken: String, scope: String?) : Token? {
         var body = "grant_type=refresh_token&refresh_token=$refreshToken"
         if (scope != null) {
             val uriScope = Uri.encode(scope)
@@ -36,12 +35,9 @@ class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: Networ
         }
 
         val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), body.toByteArray(Charset.defaultCharset()))
-        authorizer.authorize(request) { networkRequest, _ ->
+        authorizer.authorize(request)
             // Execute request
-            networkClient.execute(networkRequest) { networkResponse ->
-                //Parse Token from network response
-                parseToken(networkResponse, callback)
-            }
-        }
+        val networkResponse = networkClient.execute(request)
+        return parseToken(networkResponse)
     }
 }

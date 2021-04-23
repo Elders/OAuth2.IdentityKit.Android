@@ -1,10 +1,9 @@
 package com.eldersoss.identitykit
 
-import junit.framework.Assert.assertTrue
+import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * Created by IvanVatov on 11/6/2017.
@@ -13,12 +12,12 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 class SerialExecutorTests {
 
-    val serialExecutor = SerialTaskExecutor()
+    private val serialExecutor = SerialTaskExecutor()
 
-    var result = intArrayOf()
-    val expected = intArrayOf(8, 5, 22, 3, 10)
+    private var result = intArrayOf()
+    private val expected = intArrayOf(8, 5, 22, 3, 10)
 
-    val mainLock = java.lang.Object()
+    private val mainLock = Object()
 
     @Test
     fun testSerialExecutor() {
@@ -43,7 +42,7 @@ class SerialExecutorTests {
     private fun execute(op: Int, time: Int) {
 
         val runnable = Runnable {
-            val lock = java.lang.Object()
+            val lock = Object()
 
             performNetworkRequest(op, time) {
                 result = result.plus(op)

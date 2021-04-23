@@ -24,13 +24,8 @@ import com.eldersoss.identitykit.oauth2.Token;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-
-import kotlin.Unit;
-import kotlin.jvm.functions.Function2;
 
 import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET;
 import static org.junit.Assert.assertTrue;
@@ -41,61 +36,59 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 public class BearerAuthorizerTest {
 
-
     @Test
-    public void headerAuthorizationTest() throws Exception {
+    public void headerAuthorizationTest() {
 
-        final TestResultHandler handler = new TestResultHandler();
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile");
+
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.HEADER, token);
-        authorizer.authorize(new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile"), new Function2<NetworkRequest, Error, Unit>() {
-            @Override
-            public Unit invoke(NetworkRequest networkRequest, Error error) {
-                handler.value = networkRequest.getHeaders().get("Authorization");
-                return null;
-            }
-        });
+        authorizer.authorize(request);
+
+        String authHeaderValue = request.getHeaders().getOrDefault("Authorization", null);
         String responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
-        assertTrue(handler.value.equalsIgnoreCase(responseAuthorization));
+
+        assert authHeaderValue != null;
+        assertTrue(authHeaderValue.equalsIgnoreCase(responseAuthorization));
     }
 
     @Test
-    public void bodyAuthorizationTest() throws Exception {
+    public void bodyAuthorizationTest() {
 
-        final TestResultHandler handler = new TestResultHandler();
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile");
+        
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
-        authorizer.authorize(new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile"), new Function2<NetworkRequest, Error, Unit>() {
-            @Override
-            public Unit invoke(NetworkRequest networkRequest, Error error) {
+        authorizer.authorize(request);
+                
+        String authValue = null;
+        
+        try {
+           
+            authValue = new String(request.getBody(), DEFAULT_CHARSET);
+        } catch (UnsupportedEncodingException e) {
+            
+            e.printStackTrace();
+        }
 
-                try {
-                    handler.value = new String(networkRequest.getBody(), DEFAULT_CHARSET);
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        });
         String responseAuthorization = "access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
-        assertTrue(handler.value.contains(responseAuthorization));
+
+        assert authValue != null;
+        assertTrue(authValue.contains(responseAuthorization));
     }
 
     @Test
-    public void queryAuthorizationTest() throws Exception {
+    public void queryAuthorizationTest() {
 
-        final TestResultHandler handler = new TestResultHandler();
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
+
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile");
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.QUERY, token);
-        authorizer.authorize(new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile"), new Function2<NetworkRequest, Error, Unit>() {
-            @Override
-            public Unit invoke(NetworkRequest networkRequest, Error error) {
-                handler.value = networkRequest.getUrl();
-                return null;
-            }
-        });
+        authorizer.authorize(request);
+
+        String requestUrl = request.getUrl();
         String responseAuthorization = "access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
-        assertTrue(handler.value.contains(responseAuthorization));
+        assertTrue(requestUrl.contains(responseAuthorization));
     }
 
 }

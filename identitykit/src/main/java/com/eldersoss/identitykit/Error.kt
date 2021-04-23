@@ -28,15 +28,15 @@ interface Error {
 }
 
 internal fun getError(response: NetworkResponse): Error {
-    val errorMessage = response.getJson()?.optString("error")
-    return when (errorMessage) {
+
+    return when (response.getJson()?.optString("error")) {
+
         "invalid_request" -> OAuth2Error.INVALID_REQUEST
         "invalid_client" -> OAuth2Error.INVALID_CLIENT
         "invalid_grant" -> OAuth2Error.INVALID_GRAND
         "unauthorized_client" -> OAuth2Error.UNAUTHORIZED_CLIENT
         "unsupported_grant_type" -> OAuth2Error.UNSUPPORTED_GRANT_TYPE
         "invalid_scope" -> OAuth2Error.INVALID_SCOPE
-        "invalid_token_response" -> OAuth2Error.INVALID_TOKEN_RESPONSE
         else -> NetworkError(response.getStringData())
     }
 }
