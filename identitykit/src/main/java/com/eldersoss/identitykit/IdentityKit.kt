@@ -50,7 +50,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
     private var _token: Token? = null
 
     private val executor = SerialTaskExecutor()
-//    private val lock = java.lang.Object()
 
     /**
      * Authotrize and execute the request with provided network client
@@ -60,18 +59,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
 
         authorizeOrRefresh(request)
         return client.execute(request)
-
-            /*authorize(request) { authorizedRequest, error ->
-                if (error == null) {
-                    client.execute(authorizedRequest) { networkResponse ->
-                        callback(networkResponse)
-                    }
-                } else {
-                    val response = NetworkResponse()
-                    response.error = error
-                    callback(response)
-                }
-            }*/
     }
 
     /**
@@ -120,10 +107,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
             token = flowAuthenticate()
         }
 
-//        synchronized(lock) {
-//            lock.wait()
-//        }
-
         return token
     }
 
@@ -151,31 +134,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
 
             tokenAuthorizationProvider(it).authorize(request)
         }
-
-        /*
-        // we have refresh token stored
-        val refreshToken = storage?.read(REFRESH_TOKEN)
-        if (refreshToken != null && refresher != null) {
-            refresherRefreshToken(refreshToken) { token, error ->
-                if (error != null) {
-                    callback(request, error)
-                } else {
-                    tokenAuthorizationProvider(token!!).authorize(request, callback)
-                }
-
-            }
-        } else {
-            flowAuthenticate { token, error ->
-                if (error != null) {
-                    callback(request, error)
-                } else {
-                    tokenAuthorizationProvider(token!!).authorize(request, callback)
-                }
-            }
-        }
-        synchronized(lock) {
-            lock.wait()
-        }*/
     }
 
 
@@ -203,27 +161,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
                 throw e
             }
         }
-
-            /*parseToken(networkResponse) { token, error ->
-                if (error is OAuth2Error && kitConfiguration.retryFlowAuthentication) {
-                    if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
-                        callback(token, error)
-                    }
-                    flowAuthenticate(callback)
-                    return@parseToken
-                }
-                callback(token, error)
-
-                if (token != null) {
-                    this._token = token
-                    if (token.refreshToken != null) {
-                        storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
-                    }
-                }
-                synchronized(lock) {
-                    lock.notify()
-                }
-            }*/
 
         return token
     }
@@ -270,31 +207,6 @@ class IdentityKit(private val kitConfiguration: KitConfiguration, private val fl
         }
 
         return renewedToken
-
-        /*refresher?.refresh(refreshToken, _token?.scope) { token, error ->
-            if (token != null) {
-                this._token = token
-                if (token.refreshToken != null) {
-                    storage?.let { storage.write(REFRESH_TOKEN, token.refreshToken) }
-                }
-                callback(token, null)
-            } else {
-                if (error is OAuth2Error) {
-                    storage?.let { storage.delete(REFRESH_TOKEN) }
-                    if (kitConfiguration.authenticateOnFailedRefresh) {
-                        if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
-                            callback(token, error)
-                        }
-                        flowAuthenticate(callback)
-                        return@refresh
-                    }
-                }
-                callback(null, error)
-            }
-            synchronized(lock) {
-                lock.notify()
-            }
-        }*/
     }
 
     private fun validToken(): Token? {

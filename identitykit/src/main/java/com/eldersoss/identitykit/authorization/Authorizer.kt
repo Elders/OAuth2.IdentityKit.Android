@@ -35,16 +35,4 @@ suspend fun Authorizer.authorizeAndPerform(request: NetworkRequest, networkClien
 
     authorize(request)
     return networkClient.execute(request)
-
-   /* this.authorize(request) { networkRequest: NetworkRequest, error ->
-        if (error == null) {
-            networkClient.execute(networkRequest) { networkResponse ->
-                callback(networkResponse)
-            }
-        } else {
-            var errorResponse = NetworkResponse()
-            errorResponse.error = error
-            callback(errorResponse)
-        }
-    }*/
 }

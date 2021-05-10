@@ -63,19 +63,6 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
 
 
         return authorizer.authorizeAndPerform(request, networkClient)
-
-        /*credentialsProvider.provideCredentials { username, password ->
-
-            val params = ParamsBuilder()
-                    .add("grant_type", "password")
-                    .add("username", username)
-                    .add("password", password)
-                    .add("scope", scope)
-                    .build()
-
-            val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
-            authorizer.authorizeAndPerform(request, networkClient)
-        }*/
     }
 
     private suspend fun getCredentials(): Pair<Username, Password> {
