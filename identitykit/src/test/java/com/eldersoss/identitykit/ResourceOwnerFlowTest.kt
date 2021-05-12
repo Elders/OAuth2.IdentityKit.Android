@@ -10,7 +10,6 @@ import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.ResourceOwnerFlow
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import junit.framework.TestCase.assertTrue
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert
@@ -55,8 +54,7 @@ class ResourceOwnerFlowTest {
             BearerAuthorizer.Method.HEADER,
             DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
             TestTokenStorage(),
-            networkClient,
-            Dispatchers.Unconfined
+            networkClient
         )
 
         kit.authorizeAndExecute(
@@ -94,8 +92,7 @@ class ResourceOwnerFlowTest {
             BearerAuthorizer.Method.HEADER,
             DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
             TestTokenStorage(),
-            networkClient,
-            Dispatchers.Unconfined
+            networkClient
         )
 
         val request = NetworkRequest(
@@ -134,8 +131,7 @@ class ResourceOwnerFlowTest {
             BearerAuthorizer.Method.HEADER,
             DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
             TestTokenStorage(),
-            networkClient,
-            Dispatchers.Unconfined
+            networkClient
         )
 
         val request = NetworkRequest(
@@ -182,8 +178,7 @@ class ResourceOwnerFlowTest {
             BearerAuthorizer.Method.HEADER,
             DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
             tokenStorage,
-            networkClient,
-            Dispatchers.Unconfined
+            networkClient
         )
 
         val request = NetworkRequest(

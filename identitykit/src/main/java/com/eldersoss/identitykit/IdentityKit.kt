@@ -27,12 +27,8 @@ import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow
 import com.eldersoss.identitykit.oauth2.parseToken
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import com.eldersoss.identitykit.storage.TokenStorage
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * @property kitConfiguration - configuration
@@ -71,42 +67,19 @@ class IdentityKit(
                 client
             )
 
-    // Internal for unit test only
-    internal constructor(
-        kitConfiguration: KitConfiguration,
-        flow: AuthorizationFlow,
-        tokenAuthorizationMethod: BearerAuthorizer.Method,
-        refresher: TokenRefresher?,
-        storage: TokenStorage?,
-        client: NetworkClient,
-        dispatcher: CoroutineDispatcher
-    ) :
-            this(
-                kitConfiguration,
-                flow,
-                { token -> BearerAuthorizer(tokenAuthorizationMethod, token) },
-                refresher,
-                storage,
-                client
-            ) {
-        _dispatcher = dispatcher
-    }
-
     @Volatile
     private var _token: Token? = null
 
-    private var _dispatcher: CoroutineDispatcher =
-        Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val mutex = Mutex()
 
     /**
      * Authotrize and execute the request with provided network client
      * @param request network request
      */
     suspend fun authorizeAndExecute(request: NetworkRequest): NetworkResponse {
-        return withContext(_dispatcher) {
-            authorizeOrRefresh(request)
-            client.execute(request)
-        }
+
+        authorizeOrRefresh(request)
+        return client.execute(request)
     }
 
     /**
@@ -115,9 +88,8 @@ class IdentityKit(
      * Possible case callback can return unauthorized request and Error
      */
     suspend fun authorize(request: NetworkRequest) {
-        return withContext(_dispatcher) {
-            authorizeOrRefresh(request)
-        }
+
+        authorizeOrRefresh(request)
     }
 
     /**
@@ -137,25 +109,23 @@ class IdentityKit(
 
     suspend fun getValidToken(): Token? {
 
-        return withContext(_dispatcher) {
-            var token: Token? = null
-
+        mutex.withLock {
             val validToken = validToken()
 
-            if (validToken != null) {
+            return if (validToken != null) {
 
                 validToken
             } else {
 
                 val refreshToken = storage?.read(REFRESH_TOKEN)
+
                 // we have refresh token stored
-                if (refreshToken != null && refresher != null) {
+                _token = if (refreshToken != null && refresher != null) {
                     refresherRefreshToken(refreshToken)
                 } else {
-
-                    token = flowAuthenticate()
+                    flowAuthenticate()
                 }
-                token
+                _token
             }
         }
     }
@@ -165,24 +135,28 @@ class IdentityKit(
      */
     private suspend fun authorizeOrRefresh(request: NetworkRequest) {
 
+        mutex.withLock {
 
-        validToken()?.let {
-            tokenAuthorizationProvider(it).authorize(request)
-            return
-        }
+            validToken()?.let {
+                tokenAuthorizationProvider(it).authorize(request)
+                return
+            }
 
-        // we have refresh token stored
-        val refreshToken = storage?.read(REFRESH_TOKEN)
-        var token = if (refreshToken != null && refresher != null) {
+            // we have refresh token stored
+            val refreshToken = storage?.read(REFRESH_TOKEN)
 
-            refresherRefreshToken(refreshToken)
-        } else {
+            _token = if (refreshToken != null && refresher != null) {
 
-            flowAuthenticate()
-        }
+                refresherRefreshToken(refreshToken)
+            } else {
 
-        token?.let {
-            tokenAuthorizationProvider(it).authorize(request)
+                flowAuthenticate()
+            }
+
+            _token?.let {
+                tokenAuthorizationProvider(it).authorize(request)
+            }
+
         }
     }
 
@@ -215,7 +189,7 @@ class IdentityKit(
         return token
     }
 
-    private suspend fun tryFlowAuthenticate(): Token? {
+    private suspend fun tryFlowAuthenticate(): Token {
 
         val networkResponse = flow.authenticate()
         return parseToken(networkResponse)
