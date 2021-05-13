@@ -21,11 +21,9 @@ import com.eldersoss.identitykit.Password
 import com.eldersoss.identitykit.Username
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.authorizeAndPerform
+import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import com.eldersoss.identitykit.oauth2.Token
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
@@ -38,11 +36,17 @@ import kotlin.coroutines.suspendCoroutine
  * @property networkClient - Network client that implement NetworkClient interface
  * @constructor Create client credentials flow
  */
-class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: CredentialsProvider, val scope: String, val authorizer: Authorizer, val networkClient: NetworkClient) : AuthorizationFlow {
+class ResourceOwnerFlow(
+    private val tokenEndPoint: String,
+    private val credentialsProvider: CredentialsProvider,
+    private val scope: String,
+    private val authorizer: Authorizer,
+    private val networkClient: NetworkClient
+) : AuthorizationFlow {
     /**
      * Build and execute request for authentication
      */
-    override suspend fun authenticate(): NetworkResponse {
+    override suspend fun authenticate(): Token {
 
         val credentials = getCredentials()
 
@@ -61,8 +65,14 @@ class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: Cred
             params.toByteArray(charset(DEFAULT_CHARSET))
         )
 
+        try {
 
-        return authorizer.authorizeAndPerform(request, networkClient)
+            return authorizer.authorizeAndPerform(request, networkClient).parseToken()
+        } catch (e: Throwable) {
+
+            credentialsProvider.onAuthenticationException(e)
+            throw e
+        }
     }
 
     private suspend fun getCredentials(): Pair<Username, Password> {

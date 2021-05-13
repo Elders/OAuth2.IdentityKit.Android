@@ -19,8 +19,10 @@ package com.eldersoss.identitykit.oauth2.flows
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.authorizeAndPerform
 import com.eldersoss.identitykit.ext.getOptString
+import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
 import com.eldersoss.identitykit.oauth2.OAuth2Error
+import com.eldersoss.identitykit.oauth2.Token
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">Client Credentials Grant</a>
@@ -30,23 +32,36 @@ import com.eldersoss.identitykit.oauth2.OAuth2Error
  * @property networkClient - Network client that implement NetworkClient interface
  * @constructor Create client credentials flow
  */
-class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val authorizer: Authorizer, val networkClient: NetworkClient) : AuthorizationFlow {
+class ClientCredentialsFlow(
+    private val tokenEndPoint: String,
+    private val scope: String,
+    private val authorizer: Authorizer,
+    private val networkClient: NetworkClient
+) :
+    AuthorizationFlow {
     /**
      * Build and execute request for authentication
      */
-    override suspend fun authenticate(): NetworkResponse {
+    override suspend fun authenticate(): Token {
 
         val params = ParamsBuilder()
-                .add("grant_type", "client_credentials")
-                .add("scope", scope)
-                .build()
+            .add("grant_type", "client_credentials")
+            .add("scope", scope)
+            .build()
 
-        val request = NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
+        val request = NetworkRequest(
+            NetworkRequest.Method.POST,
+            NetworkRequest.Priority.IMMEDIATE,
+            tokenEndPoint,
+            HashMap(),
+            params.toByteArray(charset(DEFAULT_CHARSET))
+        )
         val response = authorizer.authorizeAndPerform(request, networkClient)
 
         validateResponse(response)
 
-        return response
+        return authorizer.authorizeAndPerform(request, networkClient).parseToken()
+
     }
 
     private fun validateResponse(networkResponse: NetworkResponse) {

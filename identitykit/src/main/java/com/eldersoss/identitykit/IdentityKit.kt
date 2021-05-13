@@ -24,11 +24,11 @@ import com.eldersoss.identitykit.network.NetworkResponse
 import com.eldersoss.identitykit.oauth2.Token
 import com.eldersoss.identitykit.oauth2.TokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow
-import com.eldersoss.identitykit.oauth2.parseToken
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import com.eldersoss.identitykit.storage.TokenStorage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.Exception
 
 /**
  * @property kitConfiguration - configuration
@@ -73,23 +73,21 @@ class IdentityKit(
     private val mutex = Mutex()
 
     /**
-     * Authotrize and execute the request with provided network client
+     * Authorize given request
+     */
+    suspend fun authorize(request: NetworkRequest) {
+
+        tokenAuthorizationProvider(getValidToken()).authorize(request)
+    }
+
+    /**
+     * Authorize and execute the request with provided network client
      * @param request network request
      */
     suspend fun authorizeAndExecute(request: NetworkRequest): NetworkResponse {
 
-        authorizeOrRefresh(request)
+        authorize(request)
         return client.execute(request)
-    }
-
-    /**
-     * Authotrize and return authorized request
-     * @param request network request
-     * Possible case callback can return unauthorized request and Error
-     */
-    suspend fun authorize(request: NetworkRequest) {
-
-        authorizeOrRefresh(request)
     }
 
     /**
@@ -101,13 +99,10 @@ class IdentityKit(
         return client.execute(request)
     }
 
-    fun revokeAuthentication() {
-        storage?.let { storage.delete(REFRESH_TOKEN) }
-        this._token = null
-    }
-
-
-    suspend fun getValidToken(): Token? {
+    /**
+     * Get valid token, can be used to perform authentication
+     */
+    suspend fun getValidToken(): Token {
 
         mutex.withLock {
             val validToken = validToken()
@@ -125,112 +120,64 @@ class IdentityKit(
                 } else {
                     flowAuthenticate()
                 }
-                _token
+                _token ?: throw Exception("Edge case exception")
             }
         }
     }
 
     /**
-     * Perform internal logic to authorize the request
+     * Clear stored access and refresh tokens
      */
-    private suspend fun authorizeOrRefresh(request: NetworkRequest) {
-
-        mutex.withLock {
-
-            validToken()?.let {
-                tokenAuthorizationProvider(it).authorize(request)
-                return
-            }
-
-            // we have refresh token stored
-            val refreshToken = storage?.read(REFRESH_TOKEN)
-
-            _token = if (refreshToken != null && refresher != null) {
-
-                refresherRefreshToken(refreshToken)
-            } else {
-
-                flowAuthenticate()
-            }
-
-            _token?.let {
-                tokenAuthorizationProvider(it).authorize(request)
-            }
-
-        }
+    fun revokeAuthentication() {
+        storage?.let { storage.delete(REFRESH_TOKEN) }
+        this._token = null
     }
 
-
     /** Use the given flow to obtain access token */
-    private suspend fun flowAuthenticate(): Token? {
+    private suspend fun flowAuthenticate(): Token {
 
-        var token: Token?
-
-        try {
-
-            token = tryFlowAuthenticate()
-
+        return try {
+            tryFlowAuthenticate()
         } catch (e: Throwable) {
 
             if (kitConfiguration.retryFlowAuthentication) {
-
-                if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
-
-                    throw e
-                }
-
-                token = tryFlowAuthenticate()
+                flowAuthenticate()
             } else {
-
                 throw e
             }
         }
-
-        return token
     }
 
     private suspend fun tryFlowAuthenticate(): Token {
 
-        val networkResponse = flow.authenticate()
-        return parseToken(networkResponse)
+        return flow.authenticate()
     }
 
     /** Refresh access token */
     private suspend fun refresherRefreshToken(refreshToken: String): Token? {
 
-        var renewedToken: Token? = null
+        return try {
 
-        try {
+            refresher?.refresh(refreshToken, _token?.scope)?.also {
 
-            renewedToken = refresher?.refresh(refreshToken, _token?.scope)
-            renewedToken?.let { token ->
+                this._token = it
 
-                this._token = token
-
-                token.refreshToken?.let { refreshedToken ->
+                it.refreshToken?.let { refreshedToken ->
 
                     storage?.let { storage.write(REFRESH_TOKEN, refreshedToken) }
                 }
             }
-
-            return renewedToken
 
         } catch (e: Throwable) {
 
             storage?.let { storage.delete(REFRESH_TOKEN) }
 
             if (kitConfiguration.authenticateOnFailedRefresh) {
-
-                if (kitConfiguration.onAuthenticationRetryInvokeCallbackWithFailure) {
-
-                    throw e
-                }
-
-                renewedToken = flowAuthenticate()
+                flowAuthenticate()
+            } else {
+                throw e
             }
         }
-
-        return renewedToken
     }
 
     private fun validToken(): Token? {

@@ -26,7 +26,7 @@ import javax.crypto.spec.DESKeySpec
 /**
  * Created by IvanVatov on 9/11/2017.
  */
-class DefaultTokenStorage(val context: Context) : TokenStorage {
+class DefaultTokenStorage(context: Context) : TokenStorage {
 
     private val salt = "49um32t4v0vt42509"
     private val preferenceFileName = "IdentityKit"
@@ -38,11 +38,11 @@ class DefaultTokenStorage(val context: Context) : TokenStorage {
     }
 
     override fun delete(key: String) {
-        sharedPref.edit().remove(key).commit()
+        sharedPref.edit().remove(key).apply()
     }
 
     override fun write(key: String, value: String) {
-        sharedPref.edit().putString(key, encDec(value, true)).commit()
+        sharedPref.edit().putString(key, encDec(value, true)).apply()
     }
 
     @Synchronized

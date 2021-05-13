@@ -1,5 +1,9 @@
-package com.eldersoss.identitykit
+package com.eldersoss.identitykit.oauth2.flows
 
+import com.eldersoss.identitykit.IdentityKit
+import com.eldersoss.identitykit.KitConfiguration
+import com.eldersoss.identitykit.MockNetworkClient
+import com.eldersoss.identitykit.TestTokenStorage
 import com.eldersoss.identitykit.authorization.BasicAuthorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
 import com.eldersoss.identitykit.exceptions.OAuth2Exception
@@ -25,45 +29,8 @@ class ClientCredentialsFlowTest {
 
     private val configuration = KitConfiguration(
         retryFlowAuthentication = false,
-        authenticateOnFailedRefresh = false,
-        onAuthenticationRetryInvokeCallbackWithFailure = false
+        authenticateOnFailedRefresh = false
     )
-
-    @Test
-    fun identityKitInitializationTest() = runBlockingTest {
-        val kit: IdentityKit?
-        val networkClient: NetworkClient
-
-        networkClient = MockNetworkClient()
-        networkClient.setCase(MockNetworkClient.ResponseCase.CC200OK)
-
-        val authorizer = BasicAuthorizer("client", "secret")
-        val flow = ClientCredentialsFlow(
-            "https://account.foo.bar/token",
-            "read write openid email profile offline_access owner",
-            authorizer,
-            networkClient
-        )
-
-        kit = IdentityKit(
-            configuration,
-            flow,
-            BearerAuthorizer.Method.HEADER,
-            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
-            TestTokenStorage(),
-            networkClient
-        )
-
-        kit.authorizeAndExecute(
-            NetworkRequest(
-                NetworkRequest.Method.GET,
-                NetworkRequest.Priority.HIGH,
-                "https://account.foo.bar/profile"
-            )
-        )
-
-        Assert.assertTrue(kit != null)
-    }
 
     /**
      * Unit test on asynchronous implementation in this depth cannot be provided by currently available test instruments

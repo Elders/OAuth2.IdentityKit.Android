@@ -19,7 +19,6 @@ package com.eldersoss.identitykit
 /**
  * @property retryFlowAuthentication - if flow authentication failed, this property true will retry authentication
  * @property authenticateOnFailedRefresh - if refreshing failed with OAuth2 error this property true will trigger authentication process
- * @property onAuthenticationRetryInvokeCallbackWithFailure - invoke callback with failure on retrying authentication, it requires retryFlowAuthentication true
  * @constructor - KitConfiguration
  */
-data class KitConfiguration(val retryFlowAuthentication: Boolean, val authenticateOnFailedRefresh: Boolean, val onAuthenticationRetryInvokeCallbackWithFailure: Boolean)
+data class KitConfiguration(val retryFlowAuthentication: Boolean, val authenticateOnFailedRefresh: Boolean)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.eldersoss.identitykit;
+package com.eldersoss.identitykit.authorization;
 
 import com.eldersoss.identitykit.authorization.Authorizer;
 import com.eldersoss.identitykit.authorization.BearerAuthorizer;

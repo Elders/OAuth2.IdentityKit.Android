@@ -16,12 +16,12 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
-import com.eldersoss.identitykit.network.NetworkResponse
+import com.eldersoss.identitykit.oauth2.Token
 
 /**
  * Created by IvanVatov on 8/17/2017.
  */
 interface AuthorizationFlow {
 
-    suspend fun authenticate() : NetworkResponse
+    suspend fun authenticate() : Token
 }

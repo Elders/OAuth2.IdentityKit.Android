@@ -30,4 +30,6 @@ typealias Password = String
 interface CredentialsProvider {
 
     fun provideCredentials(handler: Credentials)
+
+    fun onAuthenticationException(throwable: Throwable)
 }
