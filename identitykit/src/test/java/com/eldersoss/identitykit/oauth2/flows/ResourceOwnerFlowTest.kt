@@ -3,8 +3,6 @@ package com.eldersoss.identitykit.oauth2.flows
 import com.eldersoss.identitykit.*
 import com.eldersoss.identitykit.authorization.BasicAuthorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
-import com.eldersoss.identitykit.exceptions.OAuth2Exception
-import com.eldersoss.identitykit.exceptions.OAuth2InvalidGrand
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
@@ -12,7 +10,6 @@ import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -199,7 +196,7 @@ class ResourceOwnerFlowTest {
         val tokenStorage = TestTokenStorage()
         networkClient = MockNetworkClient()
 
-        networkClient.setCase(MockNetworkClient.ResponseCase.BAD400)
+        networkClient.setCase(MockNetworkClient.ResponseCase.INVALID_GRANT)
 
         val authorizer = BasicAuthorizer("client", "secret")
         val flow = ResourceOwnerFlow(

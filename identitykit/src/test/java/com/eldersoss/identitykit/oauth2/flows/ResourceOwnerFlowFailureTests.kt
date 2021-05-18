@@ -39,7 +39,7 @@ class ResourceOwnerFlowFailureTests {
         val networkClient: NetworkClient
         networkClient = MockNetworkClient()
 
-        networkClient.setCase(MockNetworkClient.ResponseCase.BAD400)
+        networkClient.setCase(MockNetworkClient.ResponseCase.INVALID_GRANT)
 
         val authorizer = BasicAuthorizer("client", "secret")
         val flow = ResourceOwnerFlow(
@@ -99,7 +99,7 @@ class ResourceOwnerFlowFailureTests {
 
         tokenStorage.write(REFRESH_TOKEN, "4f2aw4gf5ge0c3aa3as2e4f8a958c6")
 
-        networkClient.setCase(MockNetworkClient.ResponseCase.BAD400)
+        networkClient.setCase(MockNetworkClient.ResponseCase.INVALID_GRANT)
 
         val authorizer = BasicAuthorizer("client", "secret")
         val flow = ResourceOwnerFlow(
@@ -146,6 +146,70 @@ class ResourceOwnerFlowFailureTests {
 
 
         assertTrue(credentialsRequested)
+    }
+
+    @Test
+    fun refreshTokenFailureNoInternet() = runBlockingTest {
+
+        var credentialsRequested = false
+
+        val kit: IdentityKit
+        val networkClient: NetworkClient
+        val tokenStorage = TestTokenStorage()
+        networkClient = MockNetworkClient()
+
+        tokenStorage.write(REFRESH_TOKEN, "4f2aw4gf5ge0c3aa3as2e4f8a958c6")
+
+        networkClient.setCase(MockNetworkClient.ResponseCase.NO_INTERNET)
+
+        val authorizer = BasicAuthorizer("client", "secret")
+        val flow = ResourceOwnerFlow(
+            "https://account.foo.bar/token",
+            object : CredentialsProvider {
+                override fun provideCredentials(handler: Credentials) {
+                    credentialsRequested = true
+                    handler.invoke("gg@eldersoss.com", "ggPass123")
+                }
+
+                override fun onAuthenticationException(throwable: Throwable) {
+
+                }
+            },
+            "read write openid email profile offline_access owner",
+            authorizer,
+            networkClient
+        )
+        kit = IdentityKit(
+            KitConfiguration(
+                retryFlowAuthentication = false,
+                authenticateOnFailedRefresh = true
+            ),
+            flow,
+            BearerAuthorizer.Method.HEADER,
+            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
+            tokenStorage,
+            networkClient
+        )
+
+        val request = NetworkRequest(
+            NetworkRequest.Method.GET,
+            NetworkRequest.Priority.HIGH,
+            "https://account.foo.bar/api/profile"
+        )
+
+        var exception: Throwable? = null
+
+        try {
+
+            kit.authorize(request)
+        } catch (e: Throwable) {
+
+            exception = e
+        }
+
+        assertTrue(exception !is OAuth2Exception)
+        assertTrue(!credentialsRequested)
+        assertTrue(tokenStorage.read(REFRESH_TOKEN) != null)
     }
 
 }

@@ -47,7 +47,7 @@ fun NetworkResponse.parseToken(): Token {
     if (this.statusCode in 200..299) {
 
         val jsonObject = this.getJson()
-            ?: throw Throwable(OAuth2Error.INVALID_TOKEN_RESPONSE.getMessage())
+            ?: throw OAuth2Exception(OAuth2Error.INVALID_TOKEN_RESPONSE.getMessage())
         return Token(
             //required fields
             jsonObject.getString("access_token"),
@@ -60,6 +60,6 @@ fun NetworkResponse.parseToken(): Token {
     }
 
 
-    throw OAuth2Exception(this.error?.getMessage())
+    throw Throwable(this.error?.getMessage())
 
 }

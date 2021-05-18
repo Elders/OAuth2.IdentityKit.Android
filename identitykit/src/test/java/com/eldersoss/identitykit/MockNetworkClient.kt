@@ -8,10 +8,10 @@ import java.nio.charset.Charset
 
 class MockNetworkClient : NetworkClient {
 
-    private var responseCase = ResponseCase.NONE
+    private var responseCase = ResponseCase.NO_INTERNET
 
     enum class ResponseCase {
-        CC200OK, OK200, REFRESH200, BAD400, NONE
+        CC200OK, OK200, REFRESH200, INVALID_GRANT, NO_INTERNET,
     }
 
     fun setCase(case: ResponseCase) {
@@ -36,8 +36,8 @@ class MockNetworkClient : NetworkClient {
                 ResponseCase.OK200 -> {
                     response200()
                 }
-                ResponseCase.BAD400 -> {
-                    response400()
+                ResponseCase.INVALID_GRANT -> {
+                    invalidGrand()
                 }
                 else -> {
                     internalServerError()
@@ -60,8 +60,11 @@ class MockNetworkClient : NetworkClient {
                 ResponseCase.REFRESH200 -> {
                     response200refresh()
                 }
-                ResponseCase.BAD400 -> {
-                    response400()
+                ResponseCase.INVALID_GRANT -> {
+                    invalidGrand()
+                }
+                ResponseCase.NO_INTERNET -> {
+                    noInternet()
                 }
                 else -> {
                     internalServerError()
@@ -87,8 +90,8 @@ class MockNetworkClient : NetworkClient {
                 ResponseCase.REFRESH200 -> {
                     return response200refresh()
                 }
-                ResponseCase.BAD400 -> {
-                    return response400()
+                ResponseCase.INVALID_GRANT -> {
+                    return invalidGrand()
                 }
                 else -> {
                     return internalServerError()
@@ -144,7 +147,7 @@ class MockNetworkClient : NetworkClient {
         return response
     }
 
-    private fun response400(): NetworkResponse {
+    private fun invalidGrand(): NetworkResponse {
         val response = NetworkResponse()
         response.statusCode = 400
         val headers: MutableMap<String, String> = mutableMapOf()
@@ -176,6 +179,15 @@ class MockNetworkClient : NetworkClient {
         response.headers = headers
         val body = "Internal Server Error".toByteArray()
         response.data = body
+        return response
+    }
+
+    private fun noInternet(): NetworkResponse {
+        val response = NetworkResponse()
+        response.error = VolleyNetworkError.NETWORK_ERROR
+        response.statusCode = null
+        response.headers = null
+        response.data = null
         return response
     }
 

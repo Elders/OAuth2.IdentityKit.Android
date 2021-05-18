@@ -11,7 +11,6 @@ import com.eldersoss.identitykit.exceptions.OAuth2InvalidGrand
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
-import com.eldersoss.identitykit.oauth2.flows.ClientCredentialsFlow
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -79,7 +78,7 @@ class ClientCredentialsFlowTest {
         val kit: IdentityKit
         val networkClient: NetworkClient
         networkClient = MockNetworkClient()
-        networkClient.setCase(MockNetworkClient.ResponseCase.BAD400)
+        networkClient.setCase(MockNetworkClient.ResponseCase.INVALID_GRANT)
 
         // building IdentityKit
         val authorizer = BasicAuthorizer("client", "secret")
