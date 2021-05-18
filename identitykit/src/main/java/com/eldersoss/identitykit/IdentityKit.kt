@@ -18,6 +18,7 @@ package com.eldersoss.identitykit
 
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
+import com.eldersoss.identitykit.exceptions.OAuth2InvalidGrand
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
@@ -69,6 +70,12 @@ class IdentityKit(
 
     @Volatile
     private var _token: Token? = null
+        set(value) {
+            field = value
+            storage?.let {
+                value?.refreshToken?.let { storage.write(REFRESH_TOKEN, it) }
+            }
+        }
 
     private val mutex = Mutex()
 
@@ -150,7 +157,9 @@ class IdentityKit(
 
     private suspend fun tryFlowAuthenticate(): Token {
 
-        return flow.authenticate()
+        val token = flow.authenticate()
+        this._token = token
+        return token
     }
 
     /** Refresh access token */
@@ -170,11 +179,13 @@ class IdentityKit(
 
         } catch (e: Throwable) {
 
-            storage?.let { storage.delete(REFRESH_TOKEN) }
+            if (kitConfiguration.authenticateOnFailedRefresh && e is OAuth2InvalidGrand) {
 
-            if (kitConfiguration.authenticateOnFailedRefresh) {
+                storage?.let { storage.delete(REFRESH_TOKEN) }
+
                 flowAuthenticate()
             } else {
+
                 throw e
             }
         }
