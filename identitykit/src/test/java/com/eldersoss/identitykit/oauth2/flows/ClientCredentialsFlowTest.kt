@@ -13,6 +13,7 @@ import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert
 import org.junit.Test
@@ -64,7 +65,9 @@ class ClientCredentialsFlowTest {
             "https://account.foo.bar/api/profile"
         )
 
-        kit.authorize(request)
+        runBlocking {
+            kit.authorize(request)
+        }
 
         val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
@@ -107,7 +110,9 @@ class ClientCredentialsFlowTest {
 
         try {
 
-            kit.authorize(request)
+            runBlocking {
+                kit.authorize(request)
+            }
         } catch (e: OAuth2InvalidGrand) {
 
             oauth2Exception = e
@@ -151,7 +156,9 @@ class ClientCredentialsFlowTest {
             "https://account.foo.bar/api/profile"
         )
 
-        kit.authorize(request)
+        runBlocking {
+            kit.authorize(request)
+        }
 
         val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"

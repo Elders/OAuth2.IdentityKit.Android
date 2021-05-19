@@ -27,6 +27,8 @@ import com.eldersoss.identitykit.oauth2.TokenRefresher
 import com.eldersoss.identitykit.oauth2.flows.AuthorizationFlow
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import com.eldersoss.identitykit.storage.TokenStorage
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.Exception
@@ -123,9 +125,10 @@ class IdentityKit(
 
                 // we have refresh token stored
                 _token = if (refreshToken != null && refresher != null) {
-                    refresherRefreshToken(refreshToken)
+
+                    GlobalScope.async { refresherRefreshToken(refreshToken) }.await()
                 } else {
-                    flowAuthenticate()
+                    GlobalScope.async { flowAuthenticate() }.await()
                 }
                 _token ?: throw Exception("Edge case exception")
             }

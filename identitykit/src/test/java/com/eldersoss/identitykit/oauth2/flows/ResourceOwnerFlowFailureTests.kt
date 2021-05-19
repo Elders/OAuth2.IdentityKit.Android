@@ -11,6 +11,7 @@ import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert
 import org.junit.Test
@@ -75,8 +76,9 @@ class ResourceOwnerFlowFailureTests {
         var oauth2Exception: OAuth2Exception? = null
 
         try {
-
-            kit.authorize(request)
+            runBlocking {
+                kit.authorize(request)
+            }
         } catch (e: OAuth2InvalidGrand) {
 
             oauth2Exception = e
@@ -138,7 +140,9 @@ class ResourceOwnerFlowFailureTests {
 
         try {
 
-            kit.authorize(request)
+            runBlocking {
+                kit.authorize(request)
+            }
         } catch (e: OAuth2InvalidGrand) {
 
 
@@ -201,7 +205,9 @@ class ResourceOwnerFlowFailureTests {
 
         try {
 
-            kit.authorize(request)
+            runBlocking {
+                kit.authorize(request)
+            }
         } catch (e: Throwable) {
 
             exception = e

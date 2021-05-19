@@ -9,6 +9,9 @@ import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -66,7 +69,9 @@ class ResourceOwnerFlowTest {
             "https://account.foo.bar/api/profile"
         )
 
-        kit.authorize(request)
+        runBlocking {
+            kit.authorize(request)
+        }
 
         val authHeaderValue = request.headers["Authorization"]
 
@@ -119,7 +124,9 @@ class ResourceOwnerFlowTest {
             "https://account.foo.bar/api/profile"
         )
 
-        kit.authorize(request)
+        runBlocking {
+            kit.authorize(request)
+        }
 
         val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"
@@ -176,7 +183,9 @@ class ResourceOwnerFlowTest {
             "https://account.foo.bar/api/profile"
         )
 
-        kit.authorize(request)
+        runBlocking {
+            kit.authorize(request)
+        }
 
         val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ"
@@ -238,9 +247,9 @@ class ResourceOwnerFlowTest {
             "https://account.foo.bar/api/profile"
         )
 
-
-        kit.authorize(request)
-
+        runBlocking {
+            kit.authorize(request)
+        }
 
         val authHeaderValue = request.headers["Authorization"]
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
