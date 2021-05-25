@@ -17,7 +17,6 @@
 package com.eldersoss.identitykit.oauth2.flows
 
 import com.eldersoss.identitykit.authorization.Authorizer
-import com.eldersoss.identitykit.authorization.authorizeAndPerform
 import com.eldersoss.identitykit.ext.getOptString
 import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
@@ -56,11 +55,13 @@ class ClientCredentialsFlow(
             HashMap(),
             params.toByteArray(charset(DEFAULT_CHARSET))
         )
-        val response = authorizer.authorizeAndPerform(request, networkClient)
+
+        authorizer.authorize(request)
+        val response = networkClient.execute(request)
 
         validateResponse(response)
 
-        return authorizer.authorizeAndPerform(request, networkClient).parseToken()
+        return response.parseToken()
 
     }
 

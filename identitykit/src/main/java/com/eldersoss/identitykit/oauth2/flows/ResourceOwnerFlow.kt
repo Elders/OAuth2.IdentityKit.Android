@@ -20,7 +20,6 @@ import com.eldersoss.identitykit.CredentialsProvider
 import com.eldersoss.identitykit.Password
 import com.eldersoss.identitykit.Username
 import com.eldersoss.identitykit.authorization.Authorizer
-import com.eldersoss.identitykit.authorization.authorizeAndPerform
 import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
 import com.eldersoss.identitykit.oauth2.Token
@@ -67,7 +66,8 @@ class ResourceOwnerFlow(
 
         try {
 
-            return authorizer.authorizeAndPerform(request, networkClient).parseToken()
+            authorizer.authorize(request)
+            return networkClient.execute(request).parseToken()
         } catch (e: Throwable) {
 
             credentialsProvider.onAuthenticationException(e)
