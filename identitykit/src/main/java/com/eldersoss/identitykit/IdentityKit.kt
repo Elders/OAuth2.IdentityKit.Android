@@ -123,7 +123,9 @@ class IdentityKit(
 
                 val refreshToken = storage?.read(REFRESH_TOKEN)
 
-                // we have refresh token stored
+                // we are switching to GlobalScope for authentication, because in some cases
+                // the coroutine which request for authentication can be canceled during authentication process,
+                // and it throws "Job canceled" onAuthentication exception.
                 _token = if (refreshToken != null && refresher != null) {
 
                     GlobalScope.async { refresherRefreshToken(refreshToken) }.await()
