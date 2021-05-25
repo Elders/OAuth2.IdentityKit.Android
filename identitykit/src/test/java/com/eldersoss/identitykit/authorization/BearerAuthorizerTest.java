@@ -26,6 +26,8 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +58,7 @@ public class BearerAuthorizerTest {
     public void bodyAuthorizationTest() {
 
         Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
-        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile");
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", "asd=123&gg=asd".getBytes(StandardCharsets.UTF_8));
         
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
         authorizer.authorize(request);
@@ -71,7 +73,7 @@ public class BearerAuthorizerTest {
             e.printStackTrace();
         }
 
-        String responseAuthorization = "access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
+        String responseAuthorization = "asd=123&gg=asd&access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
 
         assert authValue != null;
         assertTrue(authValue.contains(responseAuthorization));

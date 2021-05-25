@@ -56,7 +56,7 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
 
     private fun bodyAuthorization(request: NetworkRequest) {
 
-        if (request.method != NetworkRequest.Method.GET) {
+        if (request.method == NetworkRequest.Method.GET) {
 
             throw Throwable(AuthorizationError.INVALID_METHOD.getMessage())
         }
@@ -67,22 +67,23 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
         }
 
         val accessToken = token.accessToken
-        var authorizedBody = ""
+
+
+        val uriBuilder = Uri.Builder()
 
         if (request.body?.isNotEmpty() == true) {
-
-            authorizedBody = request.body?.toString(charset(DEFAULT_CHARSET)) + "&"
+            uriBuilder.encodedQuery(request.body?.toString(charset(DEFAULT_CHARSET)))
         }
+        uriBuilder.appendQueryParameter("access_token", accessToken)
 
-        authorizedBody += "access_token=$accessToken"
-        request.body = authorizedBody.toByteArray(charset(DEFAULT_CHARSET))
+        request.body = uriBuilder.build().query?.toByteArray(charset(DEFAULT_CHARSET))
     }
 
     private fun queryAuthorization(request: NetworkRequest) {
 
         val accessToken = token.accessToken
-        var authorizedUrl : String= request.url
-        authorizedUrl += if (request.url.contains("/?")){
+        var authorizedUrl: String = request.url
+        authorizedUrl += if (request.url.contains("/?")) {
             "&access_token="
         } else {
             "?access_token="
