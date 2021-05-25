@@ -126,13 +126,10 @@ class IdentityKit(
                 // we are switching to GlobalScope for authentication, because in some cases
                 // the coroutine which request for authentication can be canceled during authentication process,
                 // and it throws "Job canceled" onAuthentication exception.
-                _token = if (refreshToken != null && refresher != null) {
 
-                    GlobalScope.async { refresherRefreshToken(refreshToken) }.await()
-                } else {
-                    GlobalScope.async { flowAuthenticate() }.await()
-                }
-                _token ?: throw Exception("Edge case exception")
+                val token = refreshToken?.let { GlobalScope.async { refresherRefreshToken(it) }.await() } ?: GlobalScope.async { flowAuthenticate() }.await()
+                _token = token
+                return token
             }
         }
     }
