@@ -83,7 +83,7 @@ class IdentityKit(
     /**
      * Authorize given request
      */
-    @Throws(Error::class)
+    @Throws(Throwable::class)
     suspend fun authorize(request: NetworkRequest) {
 
         tokenAuthorizationProvider(getValidToken()).authorize(request)
@@ -93,7 +93,7 @@ class IdentityKit(
      * Authorize and execute the request with provided network client
      * @param request network request
      */
-    @Throws(Error::class)
+    @Throws(Throwable::class)
     suspend fun authorizeAndExecute(request: NetworkRequest): NetworkResponse {
 
         authorize(request)
@@ -104,7 +104,7 @@ class IdentityKit(
      * Just execute network request request
      * @param request network request
      */
-    @Throws(Error::class)
+    @Throws(Throwable::class)
     suspend fun execute(request: NetworkRequest): NetworkResponse {
 
         return client.execute(request)
@@ -113,7 +113,7 @@ class IdentityKit(
     /**
      * Get valid token, can be used to perform authentication
      */
-    @Throws(Error::class)
+    @Throws(Throwable::class)
     suspend fun getValidToken(): Token {
 
         mutex.withLock {
