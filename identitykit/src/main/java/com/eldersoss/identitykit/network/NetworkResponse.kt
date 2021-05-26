@@ -16,7 +16,6 @@
 
 package com.eldersoss.identitykit.network
 
-import com.eldersoss.identitykit.Error
 import org.json.JSONObject
 
 /**
@@ -49,6 +48,6 @@ class NetworkResponse {
 
     /** @return response data as String */
     fun getStringData(): String? {
-        return data?.toString(charset(DEFAULT_CHARSET))
+        return data?.toString(DEFAULT_CHARSET)
     }
 }
