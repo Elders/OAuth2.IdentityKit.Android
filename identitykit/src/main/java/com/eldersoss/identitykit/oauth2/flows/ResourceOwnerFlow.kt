@@ -16,10 +16,16 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
+import android.net.Uri
 import com.eldersoss.identitykit.CredentialsProvider
+import com.eldersoss.identitykit.Password
+import com.eldersoss.identitykit.Username
 import com.eldersoss.identitykit.authorization.Authorizer
-import com.eldersoss.identitykit.authorization.authorizeAndPerform
+import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
+import com.eldersoss.identitykit.oauth2.Token
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">Client Credentials Grant</a>
@@ -30,23 +36,61 @@ import com.eldersoss.identitykit.network.*
  * @property networkClient - Network client that implement NetworkClient interface
  * @constructor Create client credentials flow
  */
-class ResourceOwnerFlow(val tokenEndPoint: String, val credentialsProvider: CredentialsProvider, val scope: String, val authorizer: Authorizer, val networkClient: NetworkClient) : AuthorizationFlow {
+class ResourceOwnerFlow(
+    private val tokenEndPoint: String,
+    private val credentialsProvider: CredentialsProvider,
+    private val scope: String,
+    private val authorizer: Authorizer,
+    private val networkClient: NetworkClient
+) : AuthorizationFlow {
     /**
      * Build and execute request for authentication
-     * @param callback - callback function with NetworkResponse
      */
-    override fun authenticate(callback: (NetworkResponse) -> Unit) {
-        credentialsProvider.provideCredentials { username, password ->
+    override suspend fun authenticate(): Token {
 
-            val params = ParamsBuilder()
-                    .add("grant_type", "password")
-                    .add("username", username)
-                    .add("password", password)
-                    .add("scope", scope)
-                    .build()
+        val credentials = getCredentials()
 
-            val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
-            authorizer.authorizeAndPerform(request, networkClient, callback)
+        val params = Uri.Builder()
+            .appendQueryParameter("grant_type", "password")
+            .appendQueryParameter("username", credentials.first)
+            .appendQueryParameter("password", credentials.second)
+            .appendQueryParameter("scope", scope)
+            .build().query
+
+        val request = NetworkRequest(
+            NetworkRequest.Method.POST,
+            NetworkRequest.Priority.IMMEDIATE,
+            tokenEndPoint,
+            HashMap(),
+            params?.toByteArray(DEFAULT_CHARSET)
+        )
+
+        try {
+
+            authorizer.authorize(request)
+            return networkClient.execute(request).parseToken()
+        } catch (e: Throwable) {
+
+            credentialsProvider.onAuthenticationException(e)
+            throw e
+        }
+    }
+
+    private suspend fun getCredentials(): Pair<Username, Password> {
+
+        return suspendCoroutine { continuation ->
+
+            try {
+
+                credentialsProvider.provideCredentials { username, password ->
+
+                    continuation.resumeWith(Result.success(Pair(username, password)))
+                }
+
+            } catch (e: Throwable) {
+
+                continuation.resumeWithException(e)
+            }
         }
     }
 }

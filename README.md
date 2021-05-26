@@ -5,20 +5,21 @@ OAuth2 client library for Android
 
 Download
 --------
-[ ![Download](https://api.bintray.com/packages/r2d2/OAuth2.IdentityKit.Android/OAuth2.IdentityKit.Android/images/download.svg) ](https://bintray.com/r2d2/OAuth2.IdentityKit.Android/OAuth2.IdentityKit.Android/_latestVersion)
+[![](https://jitpack.io/v/Elders/OAuth2.IdentityKit.Android.svg)](https://jitpack.io/#Elders/OAuth2.IdentityKit.Android)
 
-Download via Gradle:
+Add the JitPack repository to your root build.gradle file:
 ```groovy
-compile 'com.eldersoss:identitykit:0.7.1'
+	allprojects {
+		repositories {
+			maven { url 'https://jitpack.io' }
+		}
+	}
 ```
-or Maven:
-```xml
-<dependency>
-  <groupId>com.eldersoss</groupId>
-  <artifactId>identitykit</artifactId>
-  <version>0.7.1</version>
-  <type>pom</type>
-</dependency>
+Add the dependency, change {Tag} with latest version tag
+```groovy
+	dependencies {
+	        implementation 'com.github.Elders:OAuth2.IdentityKit.Android:{Tag}'
+	}
 ```
 
 How to use
@@ -27,6 +28,13 @@ Kotlin example
 ```kotlin
 // Implement own network client or use VolleyNetworkClient provided from the library
 val client = VolleyNetworkClient(/** Application Context */ context)
+
+// Sample configuration object
+val configuration = KitConfiguration(
+        retryFlowAuthentication = true, // if flow authentication failed, this property true will retry authentication
+        authenticateOnFailedRefresh = true, //if refreshing failed with OAuth2 error this property true will trigger authentication process
+        onAuthenticationRetryInvokeCallbackWithFailure = true // invoke callback with failure on retrying authentication, it requires retryFlowAuthentication true
+)
 
 // An authorizer used for access token request authorization
 val authorizer = BasicAuthorizer("client", "secret")
@@ -45,6 +53,7 @@ val tokenRefresher = DefaultTokenRefresher("https://foo.bar/token", client, auth
 
 // Build instance of IdentityKit, this is what we need to authorize network requests
 val kit = IdentityKit(
+        configuration,
         flow, 
         BearerAuthorizer.Method.HEADER, 
         tokenRefresher, 
@@ -53,7 +62,7 @@ val kit = IdentityKit(
 )
 
 // Build network request
-val request = NetworkRequest("GET", "https://foo.bar/api", HashMap(), "".toByteArray())
+val request = NetworkRequest(NetworkRequest.Method.GET, "https://foo.bar/api")
 
 // Authorize and execute network request
 kit.authorizeAndExecute(request, { networkResponse ->
@@ -64,47 +73,4 @@ kit.authorizeAndExecute(request, { networkResponse ->
 kit.authorize(request, { networkRequest, error ->
     // Execute authorized request or handle error     
 })
-```
-
-Java example is analogic
-```java
-NetworkClient client = new VolleyNetworkClient(/** Application Context */ context);
-
-Authorizer authorizer = new BasicAuthorizer("client", "secret");
-
-AuthorizationFlow flow = new ResourceOwnerFlow(
-        "https://foo.bar/token",
-        credentialsProvider,
-        "read write",
-        authorizer,
-        client
-);
-
-DefaultTokenRefreshernew tokenRefresher = DefaultTokenRefresher("https://foo.bar/token", client, authorizer);
-
-IdentityKit kit = new IdentityKit(
-        flow, 
-        BearerAuthorizer.Method.HEADER, 
-        tokenRefresher, 
-        tokenStorage, // Instance of class that implement TokenStorage interface
-        client
-);
-
-NetworkRequest request = new NetworkRequest("GET", "https://foo.bar/api", new HashMap<String, String>(), "".getBytes())
-
-kit.authorizeAndExecute(request, new Function1<NetworkResponse, Unit>() {
-   @Override
-   public Unit invoke(NetworkResponse networkResponse) {
-        // Do something with the response
-        return null;
-   }
-});
-
-kit.authorize(request, new Function2<NetworkRequest, Error, Unit>() {
-    @Override
-    public Unit invoke(NetworkRequest networkRequest, Error error) {
-        // Execute authorized request or handle error 
-        return null;
-    }
-});
 ```

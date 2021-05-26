@@ -16,48 +16,36 @@
 
 package com.eldersoss.identitykit.oauth2
 
-import com.eldersoss.identitykit.Error
-import com.eldersoss.identitykit.getError
-import com.eldersoss.identitykit.network.NetworkResponse
+import com.eldersoss.identitykit.errors.OAuth2InvalidTokenResponseError
+import com.eldersoss.identitykit.ext.getOptString
+import org.json.JSONObject
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-5.1">Successful Response</a>
  *  @constructor Access token object
  */
-data class Token(val accessToken: String,
-                 val tokenType: String,
-                 val expiresIn: Long,
-                 val refreshToken: String?,
-                 val scope: String?)
+class Token(val jsonObject: JSONObject) {
+    val accessToken: String
+    val tokenType: String
+    val expiresIn: Long
+    val refreshToken: String?
+    val scope: String?
 
-/** Parse Token object from network response, possible error */
-fun parseToken(networkResponse: NetworkResponse, callback: (Token?, Error?) -> Unit) {
-    if (networkResponse.getJson() != null && networkResponse.statusCode in 200..299) {
-        val jsonObject = networkResponse.getJson()
-        jsonObject?.let {
-            try {
-                callback(
-                        Token(
-                                //required fields
-                                it.getString("access_token"),
-                                it.getString("token_type"),
-                                (System.currentTimeMillis() / 1000) + it.getLong("expires_in"),
-                                //optional fields
-                                it.optString("refresh_token", null),
-                                it.optString("scope", null
-                                )
-                        ), null
+    private val creationTime = System.currentTimeMillis() / 1000
 
-                )
-            } catch (e: Exception) {
-                callback(null, OAuth2Error.INVALID_TOKEN_RESPONSE)
-            }
+    init {
+        try {
+            accessToken = jsonObject.getString("access_token")
+            tokenType = jsonObject.getString("token_type")
+            expiresIn = jsonObject.getLong("expires_in")
+            //optional fields
+            refreshToken = jsonObject.getOptString("refresh_token")
+            scope = jsonObject.getOptString("scope")
+        } catch (e: Throwable) {
+            throw OAuth2InvalidTokenResponseError()
         }
-    } else if (networkResponse.statusCode in 400..499) {
-        // try found Oauth2Error or return NetworkError
-        callback(null, getError(networkResponse))
-    } else {
-        // return error from network client
-        callback(null, networkResponse.error)
     }
+
+    val isExpired: Boolean
+        get() = creationTime + expiresIn > System.currentTimeMillis() / 1000
 }

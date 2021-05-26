@@ -16,11 +16,10 @@
 
 package com.eldersoss.identitykit.oauth2
 
-import com.eldersoss.identitykit.Error
-
 /**
  * Token refresher interface
  */
-interface TokenRefresher{
-    fun refresh(refreshToken: String, scope: String?, callback: (Token?, Error?) -> Unit)
+interface TokenRefresher {
+
+    suspend fun refresh(refreshToken: String, scope: String?): Token?
 }

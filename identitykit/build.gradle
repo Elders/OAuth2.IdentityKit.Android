@@ -1,46 +1,14 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'com.github.dcendents.android-maven'
-
-
-// Task bintrayUpload deploys the library to Bintray, requires local.properties file in root directory of the project.
-// ========================  add to local.properties  ================================
-// bintray.user=<your bintray username>
-// bintray.apikey=<your bintray api key>
-
-ext {
-    bintrayRepo = 'OAuth2.IdentityKit.Android'
-    bintrayName = 'OAuth2.IdentityKit.Android'
-
-    publishedGroupId = 'com.eldersoss'
-    libraryName = 'IdentityKit'
-    artifact = 'identitykit'
-
-    libraryDescription = 'OAuth2 client library for Android'
-
-    siteUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android'
-    gitUrl = 'https://github.com/Elders/OAuth2.IdentityKit.Android.git'
-
-    libraryVersion = '0.8.5' // Use the same  version as android versionName
-
-    developerId = 'ivanvatov'
-    developerName = 'Ivan Vatov'
-    developerEmail = 'ivan.vatov@eldersoss.com'
-
-    licenseName = 'The Apache Software License, Version 2.0'
-    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-    allLicenses = ["Apache-2.0"]
-}
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 29
-        versionCode 39
-        versionName "0.8.5" // Change libraryVersion too
+        targetSdkVersion 30
+        versionCode 41
+        versionName "1.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
@@ -54,14 +22,14 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.android.volley:volley:1.1.1'
-    testImplementation 'junit:junit:4.12'
-    testImplementation "org.robolectric:robolectric:3.5.1"
+    implementation 'com.android.volley:volley:1.2.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation "org.robolectric:robolectric:4.5.1"
 }
 
 tasks.withType(Javadoc) {
     enabled = false
 }
-
-apply from: 'bintray.gradle'
 

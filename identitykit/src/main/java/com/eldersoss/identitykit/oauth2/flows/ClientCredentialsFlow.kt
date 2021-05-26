@@ -16,10 +16,13 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
+import android.net.Uri
 import com.eldersoss.identitykit.authorization.Authorizer
-import com.eldersoss.identitykit.authorization.authorizeAndPerform
+import com.eldersoss.identitykit.errors.OAuth2InvalidTokenResponseError
+import com.eldersoss.identitykit.ext.getOptString
+import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
-import com.eldersoss.identitykit.oauth2.OAuth2Error
+import com.eldersoss.identitykit.oauth2.Token
 
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-4.4">Client Credentials Grant</a>
@@ -29,32 +32,51 @@ import com.eldersoss.identitykit.oauth2.OAuth2Error
  * @property networkClient - Network client that implement NetworkClient interface
  * @constructor Create client credentials flow
  */
-class ClientCredentialsFlow(val tokenEndPoint: String, val scope: String, val authorizer: Authorizer, val networkClient: NetworkClient) : AuthorizationFlow {
+class ClientCredentialsFlow(
+    private val tokenEndPoint: String,
+    private val scope: String,
+    private val authorizer: Authorizer,
+    private val networkClient: NetworkClient
+) :
+    AuthorizationFlow {
     /**
      * Build and execute request for authentication
-     * @param callback - callback function with NetworkResponse
      */
-    override fun authenticate(callback: (NetworkResponse) -> Unit) {
+    override suspend fun authenticate(): Token {
 
-        val params = ParamsBuilder()
-                .add("grant_type", "client_credentials")
-                .add("scope", scope)
-                .build()
+        val params = Uri.Builder()
+            .appendQueryParameter("grant_type", "client_credentials")
+            .appendQueryParameter("scope", scope)
+            .build().query
 
-        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), params.toByteArray(charset(DEFAULT_CHARSET)))
-        authorizer.authorizeAndPerform(request, networkClient
-                // validate response
-        ) { networkResponse -> validateResponse(networkResponse, callback) }
+        val request = NetworkRequest(
+            NetworkRequest.Method.POST,
+            NetworkRequest.Priority.IMMEDIATE,
+            tokenEndPoint,
+            HashMap(),
+            params?.toByteArray(DEFAULT_CHARSET)
+        )
+
+        authorizer.authorize(request)
+        val response = networkClient.execute(request)
+
+        validateResponse(response)
+
+        return response.parseToken()
+
     }
 
-    private fun validateResponse(networkResponse: NetworkResponse, callback: (NetworkResponse) -> Unit) {
+    private fun validateResponse(networkResponse: NetworkResponse) {
+
         if (networkResponse.getJson() != null) {
+
             val jsonObject = networkResponse.getJson()
-            val refreshToken = jsonObject?.optString("refresh_token", null)
+            val refreshToken = jsonObject?.getOptString("refresh_token")
+
             if (refreshToken != null) {
-                networkResponse.error = OAuth2Error.INVALID_TOKEN_RESPONSE
+
+                throw OAuth2InvalidTokenResponseError()
             }
         }
-        callback(networkResponse)
     }
 }

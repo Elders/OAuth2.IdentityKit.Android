@@ -17,30 +17,11 @@
 package com.eldersoss.identitykit.authorization
 
 import com.eldersoss.identitykit.network.NetworkRequest
-import com.eldersoss.identitykit.Error
-import com.eldersoss.identitykit.network.NetworkClient
-import com.eldersoss.identitykit.network.NetworkResponse
 
 /**
  * Created by IvanVatov on 8/21/2017.
  */
 interface Authorizer {
-    fun authorize(request: NetworkRequest, handler: (NetworkRequest, Error?) -> Unit)
-}
 
-/**
- * Extension function to help execution of authentication request
- */
-fun Authorizer.authorizeAndPerform(request: NetworkRequest, networkClient: NetworkClient, callback: (NetworkResponse) -> Unit) {
-    this.authorize(request) { networkRequest: NetworkRequest, error ->
-        if (error == null) {
-            networkClient.execute(networkRequest) { networkResponse ->
-                callback(networkResponse)
-            }
-        } else {
-            var errorResponse = NetworkResponse()
-            errorResponse.error = error
-            callback(errorResponse)
-        }
-    }
+    fun authorize(request: NetworkRequest)
 }

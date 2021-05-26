@@ -21,5 +21,5 @@ package com.eldersoss.identitykit.network
  */
 interface NetworkClient {
 
-    fun execute(request: NetworkRequest, callback: (NetworkResponse) -> Unit)
+    suspend fun execute(request: NetworkRequest): NetworkResponse
 }

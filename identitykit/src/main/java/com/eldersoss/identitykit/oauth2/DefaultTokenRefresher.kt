@@ -17,8 +17,8 @@
 package com.eldersoss.identitykit.oauth2
 
 import android.net.Uri
-import com.eldersoss.identitykit.Error
 import com.eldersoss.identitykit.authorization.Authorizer
+import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import java.nio.charset.Charset
@@ -26,22 +26,31 @@ import java.nio.charset.Charset
 /**
  * Default implementation
  */
-class DefaultTokenRefresher(val tokenEndPoint: String, val networkClient: NetworkClient, val authorizer: Authorizer) : TokenRefresher {
+class DefaultTokenRefresher(
+    private val tokenEndPoint: String,
+    private val networkClient: NetworkClient,
+    private val authorizer: Authorizer
+) : TokenRefresher {
 
-    override fun refresh(refreshToken: String, scope: String?, callback: (Token?, Error?) -> Unit) {
-        var body = "grant_type=refresh_token&refresh_token=$refreshToken"
+    override suspend fun refresh(refreshToken: String, scope: String?): Token? {
+        var builder = Uri.Builder()
+            .appendQueryParameter("grant_type", "refresh_token")
+            .appendQueryParameter("refresh_token", refreshToken)
         if (scope != null) {
-            val uriScope = Uri.encode(scope)
-            body += "&scope=$uriScope"
+            builder.appendQueryParameter("scope", scope)
         }
 
-        val request = NetworkRequest("POST", NetworkRequest.Priority.IMMEDIATE, tokenEndPoint, HashMap(), body.toByteArray(Charset.defaultCharset()))
-        authorizer.authorize(request) { networkRequest, _ ->
-            // Execute request
-            networkClient.execute(networkRequest) { networkResponse ->
-                //Parse Token from network response
-                parseToken(networkResponse, callback)
-            }
-        }
+        val body = builder.build().query
+
+        val request = NetworkRequest(
+            NetworkRequest.Method.POST,
+            NetworkRequest.Priority.IMMEDIATE,
+            tokenEndPoint,
+            HashMap(),
+            body?.toByteArray(Charset.defaultCharset())
+        )
+        authorizer.authorize(request)
+        // Execute request
+        return networkClient.execute(request).parseToken()
     }
 }

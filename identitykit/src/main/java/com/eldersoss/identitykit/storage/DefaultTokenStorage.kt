@@ -26,9 +26,9 @@ import javax.crypto.spec.DESKeySpec
 /**
  * Created by IvanVatov on 9/11/2017.
  */
-class DefaultTokenStorage(val context: Context) : TokenStorage {
+class DefaultTokenStorage(context: Context, private val salt: String = "49um32t4v0vt42509") :
+    TokenStorage {
 
-    private val salt = "49um32t4v0vt42509"
     private val preferenceFileName = "IdentityKit"
     private val sharedPref = context.getSharedPreferences(preferenceFileName, Context.MODE_PRIVATE)
 
@@ -38,30 +38,30 @@ class DefaultTokenStorage(val context: Context) : TokenStorage {
     }
 
     override fun delete(key: String) {
-        sharedPref.edit().remove(key).commit()
+        sharedPref.edit().remove(key).apply()
     }
 
     override fun write(key: String, value: String) {
-        sharedPref.edit().putString(key, encDec(value, true)).commit()
+        sharedPref.edit().putString(key, encDec(value, true)).apply()
     }
 
     @Synchronized
-    private fun encDec(value: String, isEncode: Boolean): String{
-        val keySpec = DESKeySpec(salt.toByteArray(charset(DEFAULT_CHARSET)))
+    private fun encDec(value: String, isEncode: Boolean): String {
+        val keySpec = DESKeySpec(salt.toByteArray(DEFAULT_CHARSET))
         val keyFactory = SecretKeyFactory.getInstance("DES")
         val key = keyFactory.generateSecret(keySpec)
         val cipher = Cipher.getInstance("DES")
 
         return if (isEncode) {
-            val byteArray: ByteArray = value.toByteArray(charset(DEFAULT_CHARSET))
+            val byteArray: ByteArray = value.toByteArray(DEFAULT_CHARSET)
             cipher.init(Cipher.ENCRYPT_MODE, key)
             val encryptedBytes = cipher.doFinal(byteArray)
             Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
         } else {
             val byteArray = Base64.decode(value, Base64.NO_WRAP)
             cipher.init(Cipher.DECRYPT_MODE, key)
-            val plainTextBytes =(cipher.doFinal(byteArray))
-            plainTextBytes.toString(charset(DEFAULT_CHARSET))
+            val plainTextBytes = (cipher.doFinal(byteArray))
+            plainTextBytes.toString(DEFAULT_CHARSET)
         }
     }
 }
