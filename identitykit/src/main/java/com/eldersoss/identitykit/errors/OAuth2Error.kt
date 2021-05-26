@@ -13,7 +13,7 @@ abstract class OAuth2Error : Error() {
 
     companion object {
 
-        internal fun getError(response: NetworkResponse): Error {
+        internal fun getError(response: NetworkResponse): OAuth2Error? {
 
             return when (response.getJson()?.optString("error")) {
 
@@ -23,13 +23,10 @@ abstract class OAuth2Error : Error() {
                 "unauthorized_client" -> OAuth2UnauthorizedClientError()
                 "unsupported_grant_type" -> OAuth2UnsupportedGrantTypeError()
                 "invalid_scope" -> OAuth2InvalidScopeError()
-                else -> Error(response.getStringData())
-            }.also {
-
-                if (it is OAuth2Error) {
-                    // Try to get the optional error_description from the response.
-                    it.errorDescription = response.getJson()?.optString("error_description")
-                }
+                else -> null
+            }?.also {
+                // Try to get the optional error_description from the response.
+                it.errorDescription = response.getJson()?.optString("error_description")
             }
         }
     }

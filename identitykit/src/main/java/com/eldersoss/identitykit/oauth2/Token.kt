@@ -24,18 +24,20 @@ import org.json.JSONObject
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-5.1">Successful Response</a>
  *  @constructor Access token object
  */
-class Token(private val jsonObject: JSONObject) {
+class Token(val jsonObject: JSONObject) {
     val accessToken: String
     val tokenType: String
     val expiresIn: Long
     val refreshToken: String?
     val scope: String?
 
+    private val creationTime = System.currentTimeMillis() / 1000
+
     init {
         try {
             accessToken = jsonObject.getString("access_token")
             tokenType = jsonObject.getString("token_type")
-            expiresIn = (System.currentTimeMillis() / 1000) + jsonObject.getLong("expires_in")
+            expiresIn = jsonObject.getLong("expires_in")
             //optional fields
             refreshToken = jsonObject.getOptString("refresh_token")
             scope = jsonObject.getOptString("scope")
@@ -44,7 +46,6 @@ class Token(private val jsonObject: JSONObject) {
         }
     }
 
-    fun getObject(name: String): Any? {
-        return jsonObject.opt(name)
-    }
+    val isExpired: Boolean
+        get() = creationTime + expiresIn > System.currentTimeMillis() / 1000
 }

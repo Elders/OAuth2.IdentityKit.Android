@@ -8,8 +8,10 @@ fun NetworkResponse.parseToken(): Token {
 
     if (this.statusCode in 400..499) {
 
-        // try found OAuth2Error or throw general Error
-        throw OAuth2Error.getError(this)
+        // try found OAuth2Error
+        OAuth2Error.getError(this)?.let {
+            throw it
+        }
     }
 
     if (this.statusCode in 200..299) {

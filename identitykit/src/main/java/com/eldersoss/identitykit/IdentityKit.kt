@@ -130,7 +130,9 @@ class IdentityKit(
                 // the coroutine which request for authentication can be canceled during authentication process,
                 // and it throws "Job canceled" onAuthentication exception.
 
-                val token = refreshToken?.let { GlobalScope.async { refresherRefreshToken(it) }.await() } ?: GlobalScope.async { flowAuthenticate() }.await()
+                val token =
+                    refreshToken?.let { GlobalScope.async { refresherRefreshToken(it) }.await() }
+                        ?: GlobalScope.async { flowAuthenticate() }.await()
                 _token = token
                 return token
             }
@@ -197,10 +199,8 @@ class IdentityKit(
     }
 
     private fun validToken(): Token? {
-        if (this._token != null && this._token?.expiresIn != null) {
-            if (this._token?.expiresIn!! > System.currentTimeMillis() / 1000) {
-                return this._token
-            }
+        if (this._token != null && this._token?.isExpired == false) {
+            return this._token
         }
         return null
     }

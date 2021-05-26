@@ -131,7 +131,26 @@ public class BearerAuthorizerTest {
     }
 
     @Test
-    public void queryAuthorizationTest() {
+    public void bodyAuthorizationWrongContentTypeAndMethodTest() {
+
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", "asd=123&gg=asd".getBytes(StandardCharsets.UTF_8));
+        request.getHeaders().put("Content-Type", "application/json");
+
+        Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
+
+        Throwable throwable = null;
+
+        try {
+            authorizer.authorize(request);
+        } catch (Throwable e) {
+            throwable = e;
+        }
+
+        Assert.assertTrue(throwable instanceof OAuth2AuthorizationInvalidMethodError);
+    }
+
+    @Test
+    public void queryAuthorizationWithAdditionalQueryParametersTest() {
 
         String url = "https://account.foo.bar/profile?id=123";
 
@@ -145,7 +164,7 @@ public class BearerAuthorizerTest {
     }
 
     @Test
-    public void queryAuthorizationTest2() {
+    public void queryAuthorizationTest() {
 
         String url = "https://account.foo.bar/profile";
 
