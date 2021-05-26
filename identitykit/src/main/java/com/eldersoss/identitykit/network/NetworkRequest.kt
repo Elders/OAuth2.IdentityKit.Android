@@ -26,7 +26,13 @@ import kotlin.collections.HashMap
  * @property body usually UTF-8 encoded
  * @constructor Network request
  */
-open class NetworkRequest(val method: Method, val priority: Priority, var url: String, var headers: HashMap<String, String>, var body: ByteArray?) {
+open class NetworkRequest(
+    val method: Method,
+    val priority: Priority,
+    var url: String,
+    var headers: HashMap<String, String>,
+    var body: ByteArray?
+) {
 
     constructor(method: Method, priority: Priority, url: String) :
             this(method, priority, url, HashMap(), null)
@@ -37,7 +43,9 @@ open class NetworkRequest(val method: Method, val priority: Priority, var url: S
     constructor(method: Method, priority: Priority, url: String, body: ByteArray) :
             this(method, priority, url, HashMap(), body)
 
-    var bodyContentType = BODY_CONTENT_TYPE
+    val contentType: String
+        get() = headers["Content-Type"] ?: DEFAULT_BODY_CONTENT_TYPE
+
 
     //TODO: add necessary parameters for priority, retry and etc
 
@@ -60,6 +68,6 @@ open class NetworkRequest(val method: Method, val priority: Priority, var url: S
     }
 }
 
-const val BODY_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8"
+const val DEFAULT_BODY_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8"
 
-const val DEFAULT_CHARSET = "UTF-8"
+val DEFAULT_CHARSET = charset("UTF-8")

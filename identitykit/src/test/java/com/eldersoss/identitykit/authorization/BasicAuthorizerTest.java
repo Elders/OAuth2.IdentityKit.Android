@@ -18,18 +18,12 @@ package com.eldersoss.identitykit.authorization;
 
 import android.util.Base64;
 
-import com.eldersoss.identitykit.authorization.Authorizer;
-import com.eldersoss.identitykit.authorization.BasicAuthorizer;
 import com.eldersoss.identitykit.network.NetworkRequest;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
-
 import java.nio.charset.Charset;
 import java.util.HashMap;
-
-import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -49,7 +43,7 @@ public class BasicAuthorizerTest {
         Authorizer authorizer = new BasicAuthorizer("clientid", "clientsecret");
         authorizer.authorize(request);
 
-        String responseAuthorization = "Basic " + Base64.encodeToString("clientid:clientsecret".getBytes(Charset.forName(DEFAULT_CHARSET)), Base64.NO_WRAP);
+        String responseAuthorization = "Basic " + Base64.encodeToString("clientid:clientsecret".getBytes(Charset.forName("UTF-8")), Base64.NO_WRAP);
 
         String authHeaderValue = request.getHeaders().getOrDefault("Authorization", null);
 

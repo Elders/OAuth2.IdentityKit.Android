@@ -40,6 +40,6 @@ class BasicAuthorizer(private val userName : String, private val password : Stri
 
     private fun encodeString(str : String) : String{
 
-        return Base64.encodeToString(str.toByteArray(charset(DEFAULT_CHARSET)), Base64.NO_WRAP)
+        return Base64.encodeToString(str.toByteArray(DEFAULT_CHARSET), Base64.NO_WRAP)
     }
 }

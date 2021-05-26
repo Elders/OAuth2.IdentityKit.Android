@@ -16,12 +16,35 @@
 
 package com.eldersoss.identitykit.oauth2
 
+import com.eldersoss.identitykit.errors.OAuth2InvalidTokenResponseError
+import com.eldersoss.identitykit.ext.getOptString
+import org.json.JSONObject
+
 /**
  * @see <a href="https://tools.ietf.org/html/rfc6749#section-5.1">Successful Response</a>
  *  @constructor Access token object
  */
-data class Token(val accessToken: String,
-                 val tokenType: String,
-                 val expiresIn: Long,
-                 val refreshToken: String?,
-                 val scope: String?)
+class Token(private val jsonObject: JSONObject) {
+    val accessToken: String
+    val tokenType: String
+    val expiresIn: Long
+    val refreshToken: String?
+    val scope: String?
+
+    init {
+        try {
+            accessToken = jsonObject.getString("access_token")
+            tokenType = jsonObject.getString("token_type")
+            expiresIn = (System.currentTimeMillis() / 1000) + jsonObject.getLong("expires_in")
+            //optional fields
+            refreshToken = jsonObject.getOptString("refresh_token")
+            scope = jsonObject.getOptString("scope")
+        } catch (e: Throwable) {
+            throw OAuth2InvalidTokenResponseError()
+        }
+    }
+
+    fun getObject(name: String): Any? {
+        return jsonObject.opt(name)
+    }
+}

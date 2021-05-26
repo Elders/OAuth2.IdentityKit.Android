@@ -33,18 +33,21 @@ class DefaultTokenRefresher(
 ) : TokenRefresher {
 
     override suspend fun refresh(refreshToken: String, scope: String?): Token? {
-        var body = "grant_type=refresh_token&refresh_token=$refreshToken"
+        var builder = Uri.Builder()
+            .appendQueryParameter("grant_type", "refresh_token")
+            .appendQueryParameter("refresh_token", refreshToken)
         if (scope != null) {
-            val uriScope = Uri.encode(scope)
-            body += "&scope=$uriScope"
+            builder.appendQueryParameter("scope", scope)
         }
+
+        val body = builder.build().query
 
         val request = NetworkRequest(
             NetworkRequest.Method.POST,
             NetworkRequest.Priority.IMMEDIATE,
             tokenEndPoint,
             HashMap(),
-            body.toByteArray(Charset.defaultCharset())
+            body?.toByteArray(Charset.defaultCharset())
         )
         authorizer.authorize(request)
         // Execute request

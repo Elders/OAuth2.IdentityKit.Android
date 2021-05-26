@@ -16,20 +16,21 @@
 
 package com.eldersoss.identitykit.authorization;
 
-import com.eldersoss.identitykit.authorization.Authorizer;
-import com.eldersoss.identitykit.authorization.BearerAuthorizer;
+import com.eldersoss.identitykit.errors.OAuth2AuthorizationInvalidContentTypeError;
+import com.eldersoss.identitykit.errors.OAuth2AuthorizationInvalidMethodError;
 import com.eldersoss.identitykit.network.NetworkRequest;
 import com.eldersoss.identitykit.oauth2.Token;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static com.eldersoss.identitykit.network.NetworkRequestKt.DEFAULT_CHARSET;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -38,10 +39,24 @@ import static org.junit.Assert.assertTrue;
 @RunWith(RobolectricTestRunner.class)
 public class BearerAuthorizerTest {
 
+
+    Token token;
+
+    {
+        try {
+            token = new Token(new JSONObject("{\n" +
+                    "\t\"access_token\": \"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9\",\n" +
+                    "\t\"token_type\": \"Bearer\",\n" +
+                    "\t\"expires_in\": 3600,\n" +
+                    "\t\"refresh_token\": \"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"\n" +
+                    "}"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void headerAuthorizationTest() {
-
-        Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
         NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile");
 
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.HEADER, token);
@@ -57,19 +72,18 @@ public class BearerAuthorizerTest {
     @Test
     public void bodyAuthorizationTest() {
 
-        Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
         NetworkRequest request = new NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", "asd=123&gg=asd".getBytes(StandardCharsets.UTF_8));
-        
+
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
         authorizer.authorize(request);
-                
+
         String authValue = null;
-        
+
         try {
-           
-            authValue = new String(request.getBody(), DEFAULT_CHARSET);
-        } catch (UnsupportedEncodingException e) {
-            
+
+            authValue = new String(request.getBody(), Charset.forName("UTF-8"));
+        } catch (Throwable e) {
+
             e.printStackTrace();
         }
 
@@ -80,17 +94,68 @@ public class BearerAuthorizerTest {
     }
 
     @Test
+    public void bodyAuthorizationWrongMethodTest() {
+
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", "asd=123&gg=asd".getBytes(StandardCharsets.UTF_8));
+
+        Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
+
+        Throwable throwable = null;
+
+        try {
+            authorizer.authorize(request);
+        } catch (Throwable e) {
+            throwable = e;
+        }
+
+        Assert.assertTrue(throwable instanceof OAuth2AuthorizationInvalidMethodError);
+    }
+
+    @Test
+    public void bodyAuthorizationWrongContentTypeTest() {
+
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.POST, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile", "asd=123&gg=asd".getBytes(StandardCharsets.UTF_8));
+        request.getHeaders().put("Content-Type", "application/json");
+
+        Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.BODY, token);
+
+        Throwable throwable = null;
+
+        try {
+            authorizer.authorize(request);
+        } catch (Throwable e) {
+            throwable = e;
+        }
+
+        Assert.assertTrue(throwable instanceof OAuth2AuthorizationInvalidContentTypeError);
+    }
+
+    @Test
     public void queryAuthorizationTest() {
 
-        Token token = new Token("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9", "Bearer", 3600, "4f2aw4gf5ge0c3aa3as2e4f8a958c6", null);
+        String url = "https://account.foo.bar/profile?id=123";
 
-        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, "https://account.foo.bar/profile");
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, url);
         Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.QUERY, token);
         authorizer.authorize(request);
 
         String requestUrl = request.getUrl();
         String responseAuthorization = "access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
-        assertTrue(requestUrl.contains(responseAuthorization));
+        Assert.assertEquals(requestUrl, url + "&" + responseAuthorization);
+    }
+
+    @Test
+    public void queryAuthorizationTest2() {
+
+        String url = "https://account.foo.bar/profile";
+
+        NetworkRequest request = new NetworkRequest(NetworkRequest.Method.GET, NetworkRequest.Priority.HIGH, url);
+        Authorizer authorizer = new BearerAuthorizer(BearerAuthorizer.Method.QUERY, token);
+        authorizer.authorize(request);
+
+        String requestUrl = request.getUrl();
+        String responseAuthorization = "access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9";
+        Assert.assertEquals(requestUrl, url + "?" + responseAuthorization);
     }
 
 }

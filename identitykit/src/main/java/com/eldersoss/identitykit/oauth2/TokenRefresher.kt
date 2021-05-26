@@ -19,7 +19,7 @@ package com.eldersoss.identitykit.oauth2
 /**
  * Token refresher interface
  */
-interface TokenRefresher{
+interface TokenRefresher {
 
     suspend fun refresh(refreshToken: String, scope: String?): Token?
 }

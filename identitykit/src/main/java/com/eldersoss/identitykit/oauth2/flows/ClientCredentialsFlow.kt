@@ -16,11 +16,12 @@
 
 package com.eldersoss.identitykit.oauth2.flows
 
+import android.net.Uri
 import com.eldersoss.identitykit.authorization.Authorizer
+import com.eldersoss.identitykit.errors.OAuth2InvalidTokenResponseError
 import com.eldersoss.identitykit.ext.getOptString
 import com.eldersoss.identitykit.ext.parseToken
 import com.eldersoss.identitykit.network.*
-import com.eldersoss.identitykit.oauth2.OAuth2Error
 import com.eldersoss.identitykit.oauth2.Token
 
 /**
@@ -43,17 +44,17 @@ class ClientCredentialsFlow(
      */
     override suspend fun authenticate(): Token {
 
-        val params = ParamsBuilder()
-            .add("grant_type", "client_credentials")
-            .add("scope", scope)
-            .build()
+        val params = Uri.Builder()
+            .appendQueryParameter("grant_type", "client_credentials")
+            .appendQueryParameter("scope", scope)
+            .build().query
 
         val request = NetworkRequest(
             NetworkRequest.Method.POST,
             NetworkRequest.Priority.IMMEDIATE,
             tokenEndPoint,
             HashMap(),
-            params.toByteArray(charset(DEFAULT_CHARSET))
+            params?.toByteArray(DEFAULT_CHARSET)
         )
 
         authorizer.authorize(request)
@@ -74,7 +75,7 @@ class ClientCredentialsFlow(
 
             if (refreshToken != null) {
 
-                throw Throwable(OAuth2Error.INVALID_TOKEN_RESPONSE.getMessage())
+                throw OAuth2InvalidTokenResponseError()
             }
         }
     }

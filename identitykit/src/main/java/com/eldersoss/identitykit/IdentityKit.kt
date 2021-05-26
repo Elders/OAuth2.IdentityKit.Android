@@ -18,7 +18,7 @@ package com.eldersoss.identitykit
 
 import com.eldersoss.identitykit.authorization.Authorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
-import com.eldersoss.identitykit.exceptions.OAuth2InvalidGrand
+import com.eldersoss.identitykit.errors.OAuth2InvalidGrandError
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
@@ -31,7 +31,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.Exception
 
 /**
  * @property kitConfiguration - configuration
@@ -84,6 +83,7 @@ class IdentityKit(
     /**
      * Authorize given request
      */
+    @Throws(Error::class)
     suspend fun authorize(request: NetworkRequest) {
 
         tokenAuthorizationProvider(getValidToken()).authorize(request)
@@ -93,6 +93,7 @@ class IdentityKit(
      * Authorize and execute the request with provided network client
      * @param request network request
      */
+    @Throws(Error::class)
     suspend fun authorizeAndExecute(request: NetworkRequest): NetworkResponse {
 
         authorize(request)
@@ -103,6 +104,7 @@ class IdentityKit(
      * Just execute network request request
      * @param request network request
      */
+    @Throws(Error::class)
     suspend fun execute(request: NetworkRequest): NetworkResponse {
 
         return client.execute(request)
@@ -111,6 +113,7 @@ class IdentityKit(
     /**
      * Get valid token, can be used to perform authentication
      */
+    @Throws(Error::class)
     suspend fun getValidToken(): Token {
 
         mutex.withLock {
@@ -181,7 +184,7 @@ class IdentityKit(
 
         } catch (e: Throwable) {
 
-            if (kitConfiguration.authenticateOnFailedRefresh && e is OAuth2InvalidGrand) {
+            if (kitConfiguration.authenticateOnFailedRefresh && e is OAuth2InvalidGrandError) {
 
                 storage?.let { storage.delete(REFRESH_TOKEN) }
 

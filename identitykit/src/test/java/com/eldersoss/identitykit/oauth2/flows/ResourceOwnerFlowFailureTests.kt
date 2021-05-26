@@ -3,8 +3,8 @@ package com.eldersoss.identitykit.oauth2.flows
 import com.eldersoss.identitykit.*
 import com.eldersoss.identitykit.authorization.BasicAuthorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
-import com.eldersoss.identitykit.exceptions.OAuth2Exception
-import com.eldersoss.identitykit.exceptions.OAuth2InvalidGrand
+import com.eldersoss.identitykit.errors.OAuth2Error
+import com.eldersoss.identitykit.errors.OAuth2InvalidGrandError
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
@@ -73,20 +73,20 @@ class ResourceOwnerFlowFailureTests {
             "https://account.foo.bar/api/profile"
         )
 
-        var oauth2Exception: OAuth2Exception? = null
+        var oauth2Exception: OAuth2Error? = null
 
         try {
             runBlocking {
                 kit.authorize(request)
             }
-        } catch (e: OAuth2InvalidGrand) {
+        } catch (e: OAuth2InvalidGrandError) {
 
             oauth2Exception = e
         }
 
-        Assert.assertTrue(error is OAuth2InvalidGrand)
+        Assert.assertTrue(error is OAuth2InvalidGrandError)
 
-        Assert.assertTrue(oauth2Exception is OAuth2InvalidGrand)
+        Assert.assertTrue(oauth2Exception is OAuth2InvalidGrandError)
     }
 
     @Test
@@ -143,7 +143,7 @@ class ResourceOwnerFlowFailureTests {
             runBlocking {
                 kit.authorize(request)
             }
-        } catch (e: OAuth2InvalidGrand) {
+        } catch (e: OAuth2InvalidGrandError) {
 
 
         }
@@ -213,7 +213,7 @@ class ResourceOwnerFlowFailureTests {
             exception = e
         }
 
-        assertTrue(exception !is OAuth2Exception)
+        assertTrue(exception !is OAuth2Error)
         assertTrue(!credentialsRequested)
         assertTrue(tokenStorage.read(REFRESH_TOKEN) != null)
     }

@@ -17,7 +17,9 @@
 package com.eldersoss.identitykit.authorization
 
 import android.net.Uri
-import com.eldersoss.identitykit.network.BODY_CONTENT_TYPE
+import com.eldersoss.identitykit.errors.OAuth2AuthorizationInvalidContentTypeError
+import com.eldersoss.identitykit.errors.OAuth2AuthorizationInvalidMethodError
+import com.eldersoss.identitykit.network.DEFAULT_BODY_CONTENT_TYPE
 import com.eldersoss.identitykit.network.DEFAULT_CHARSET
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.oauth2.Token
@@ -58,12 +60,12 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
 
         if (request.method == NetworkRequest.Method.GET) {
 
-            throw Throwable(AuthorizationError.INVALID_METHOD.getMessage())
+            throw OAuth2AuthorizationInvalidMethodError()
         }
 
-        if (request.bodyContentType != BODY_CONTENT_TYPE) {
+        if (request.contentType != DEFAULT_BODY_CONTENT_TYPE) {
 
-            throw Throwable(AuthorizationError.INVALID_CONTENT_TYPE.getMessage())
+            throw OAuth2AuthorizationInvalidContentTypeError()
         }
 
         val accessToken = token.accessToken
@@ -72,23 +74,21 @@ class BearerAuthorizer(val method: Method, val token: Token) : Authorizer {
         val uriBuilder = Uri.Builder()
 
         if (request.body?.isNotEmpty() == true) {
-            uriBuilder.encodedQuery(request.body?.toString(charset(DEFAULT_CHARSET)))
+            uriBuilder.encodedQuery(request.body?.toString(DEFAULT_CHARSET))
         }
         uriBuilder.appendQueryParameter("access_token", accessToken)
 
-        request.body = uriBuilder.build().query?.toByteArray(charset(DEFAULT_CHARSET))
+        request.body = uriBuilder.build().query?.toByteArray(DEFAULT_CHARSET)
     }
 
     private fun queryAuthorization(request: NetworkRequest) {
 
         val accessToken = token.accessToken
-        var authorizedUrl: String = request.url
-        authorizedUrl += if (request.url.contains("/?")) {
-            "&access_token="
-        } else {
-            "?access_token="
-        }
-        authorizedUrl += Uri.encode(accessToken)
-        request.url = authorizedUrl
+        val authorizedUrl = Uri.parse(request.url).buildUpon()
+            .encodedOpaquePart(request.url)
+            .appendQueryParameter("access_token", accessToken)
+            .build()
+
+        request.url = authorizedUrl.toString()
     }
 }

@@ -1,9 +1,10 @@
 package com.eldersoss.identitykit
 
+import com.android.volley.NetworkError
+import com.android.volley.ServerError
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
 import com.eldersoss.identitykit.network.NetworkResponse
-import com.eldersoss.identitykit.network.volley.VolleyNetworkError
 import java.nio.charset.Charset
 
 class MockNetworkClient : NetworkClient {
@@ -24,7 +25,7 @@ class MockNetworkClient : NetworkClient {
         val bodyString = request.body?.toString(Charset.defaultCharset())
 
         if (request.method === NetworkRequest.Method.POST && bodyString.equals(
-                "grant_type=password&username=gg%40eldersoss.com&password=ggPass123&scope=read%20write%20openid%20email%20profile%20offline_access%20owner",
+                "grant_type=password&username=gg@eldersoss.com&password=ggPass123&scope=read write openid email profile offline_access owner",
                 ignoreCase = true
             )
             && request.headers["Authorization"].equals(
@@ -72,7 +73,7 @@ class MockNetworkClient : NetworkClient {
             }
             //client credentials response
         } else if (request.method === NetworkRequest.Method.POST && bodyString.equals(
-                "grant_type=client_credentials&scope=read%20write%20openid%20email%20profile%20offline_access%20owner",
+                "grant_type=client_credentials&scope=read write openid email profile offline_access owner",
                 ignoreCase = true
             )
             && request.headers["Authorization"].equals(
@@ -172,7 +173,7 @@ class MockNetworkClient : NetworkClient {
 
     private fun internalServerError(): NetworkResponse {
         val response = NetworkResponse()
-        response.error = VolleyNetworkError.SERVER_ERROR
+        response.error = Error(ServerError())
         response.statusCode = 500
         val headers: MutableMap<String, String> = mutableMapOf()
         putStandartHeaders(headers)
@@ -184,7 +185,7 @@ class MockNetworkClient : NetworkClient {
 
     private fun noInternet(): NetworkResponse {
         val response = NetworkResponse()
-        response.error = VolleyNetworkError.NETWORK_ERROR
+        response.error = Error(NetworkError())
         response.statusCode = null
         response.headers = null
         response.data = null
