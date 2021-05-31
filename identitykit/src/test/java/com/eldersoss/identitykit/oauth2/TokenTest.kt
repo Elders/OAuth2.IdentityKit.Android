@@ -40,6 +40,6 @@ class TokenTest {
         )
         Thread.sleep(2000)
 
-        Assert.assertTrue(!token.isExpired)
+        Assert.assertFalse(token.isExpired)
     }
 }
