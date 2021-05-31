@@ -47,5 +47,5 @@ class Token(val jsonObject: JSONObject) {
     }
 
     val isExpired: Boolean
-        get() = creationTime + expiresIn > System.currentTimeMillis() / 1000
+        get() = System.currentTimeMillis() / 1000 > creationTime + expiresIn
 }
