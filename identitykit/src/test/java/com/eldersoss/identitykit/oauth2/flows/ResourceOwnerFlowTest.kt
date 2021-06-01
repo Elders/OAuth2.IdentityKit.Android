@@ -5,17 +5,18 @@ import com.eldersoss.identitykit.authorization.BasicAuthorizer
 import com.eldersoss.identitykit.authorization.BearerAuthorizer
 import com.eldersoss.identitykit.network.NetworkClient
 import com.eldersoss.identitykit.network.NetworkRequest
+import com.eldersoss.identitykit.network.NetworkResponse
 import com.eldersoss.identitykit.oauth2.DefaultTokenRefresher
 import com.eldersoss.identitykit.storage.REFRESH_TOKEN
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.runBlockingTest
+import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.nio.charset.Charset
 
 /**
  * Created by IvanVatov on 11/7/2017.
@@ -255,5 +256,100 @@ class ResourceOwnerFlowTest {
         val responseAuthorization = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9"
 
         assertTrue(authHeaderValue.equals(responseAuthorization))
+    }
+
+    @Test
+    fun retryIfExecutedRequestReturnsUnauthorized() = runBlockingTest {
+
+
+        val profileApiResult =
+            "{\"result\": [{\"type\": \"profileid\",\"value\": \"123\"},{\"type\": \"name\",\"value\": \"Identity Kit\"}]}"
+
+        var credentialsRequestedCounter = 0
+        var authenticationException: Throwable? = null
+
+        var profileRequestedWithUnauthorizedResponse = false
+        var tokenIsRefreshed = false
+
+        val networkClient = object : NetworkClient {
+            override suspend fun execute(request: NetworkRequest): NetworkResponse {
+                if (request.url == "https://account.foo.bar/token") {
+                    if (request.body?.toString(Charset.defaultCharset()) == "grant_type=refresh_token&refresh_token=4f2aw4gf5ge0c3aa3as2e4f8a958c6") {
+                        tokenIsRefreshed = true
+                    }
+                    return NetworkResponse().apply {
+                        statusCode = 200
+                        headers = MockNetworkClient.putStandardHeaders(mutableMapOf())
+                        data =
+                            "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9\",\"expires_in\":3600,\"token_type\":\"Bearer\",\"refresh_token\":\"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"}".toByteArray()
+                    }
+                } else {
+                    if (!profileRequestedWithUnauthorizedResponse) {
+
+                        profileRequestedWithUnauthorizedResponse = true
+
+                        return NetworkResponse().apply {
+                            statusCode = 401
+                            headers = MockNetworkClient.putStandardHeaders(mutableMapOf())
+                        }
+                    }
+
+                    return NetworkResponse().apply {
+                        statusCode = 200
+                        headers = MockNetworkClient.putStandardHeaders(mutableMapOf())
+                        data = profileApiResult.toByteArray()
+                    }
+                }
+            }
+        }
+        val tokenStorage = TestTokenStorage()
+
+        val authorizer = BasicAuthorizer("client", "secret")
+        val flow = ResourceOwnerFlow(
+            "https://account.foo.bar/token",
+            object : CredentialsProvider {
+                override fun provideCredentials(handler: Credentials) {
+
+                    credentialsRequestedCounter++
+                    handler.invoke("gg@eldersoss.com", "ggPass123")
+                }
+
+                override fun onAuthenticationException(throwable: Throwable) {
+                    authenticationException = throwable
+                }
+            },
+            "read write openid email profile offline_access owner",
+            authorizer,
+            networkClient
+        )
+        val kit = IdentityKit(
+            KitConfiguration(
+                retryFlowAuthentication = true,
+                authenticateOnFailedRefresh = true
+            ),
+            flow,
+            BearerAuthorizer.Method.HEADER,
+            DefaultTokenRefresher("https://account.foo.bar/token", networkClient, authorizer),
+            tokenStorage,
+            networkClient
+        )
+
+        val request = NetworkRequest(
+            NetworkRequest.Method.GET,
+            NetworkRequest.Priority.HIGH,
+            "https://account.foo.bar/api/profile"
+        )
+
+        var response: NetworkResponse?
+
+        runBlocking {
+            response = kit.authorizeAndExecute(request)
+        }
+
+        Assert.assertEquals(credentialsRequestedCounter, 1)
+        Assert.assertTrue(tokenIsRefreshed)
+        Assert.assertNull(authenticationException)
+        Assert.assertTrue(profileRequestedWithUnauthorizedResponse)
+        Assert.assertEquals(response?.getStringData(), profileApiResult)
     }
 }
