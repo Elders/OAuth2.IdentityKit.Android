@@ -97,7 +97,16 @@ class IdentityKit(
     suspend fun authorizeAndExecute(request: NetworkRequest): NetworkResponse {
 
         authorize(request)
-        return client.execute(request)
+        var result = client.execute(request)
+
+        //invalidate token and retry once if server returns unauthorized
+        if (result.statusCode == 401) {
+            this._token = null
+            authorize(request)
+            result = client.execute(request)
+        }
+
+        return result
     }
 
     /**

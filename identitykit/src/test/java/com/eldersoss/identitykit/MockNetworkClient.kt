@@ -116,7 +116,7 @@ class MockNetworkClient : NetworkClient {
         val response = NetworkResponse()
         response.statusCode = 200
         val headers: MutableMap<String, String> = mutableMapOf()
-        putStandartHeaders(headers)
+        putStandardHeaders(headers)
         response.headers = headers
         val body =
             "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9\",\"expires_in\":3600,\"token_type\":\"Bearer\",\"refresh_token\":\"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"}".toByteArray()
@@ -128,7 +128,7 @@ class MockNetworkClient : NetworkClient {
         val response = NetworkResponse()
         response.statusCode = 200
         val headers: MutableMap<String, String> = mutableMapOf()
-        putStandartHeaders(headers)
+        putStandardHeaders(headers)
         response.headers = headers
         val body =
             "{\"access_token\":\"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9\",\"expires_in\":3600,\"token_type\":\"Bearer\"}".toByteArray()
@@ -140,7 +140,7 @@ class MockNetworkClient : NetworkClient {
         val response = NetworkResponse()
         response.statusCode = 200
         val headers: MutableMap<String, String> = mutableMapOf()
-        putStandartHeaders(headers)
+        putStandardHeaders(headers)
         response.headers = headers
         val body =
             "{\"access_token\":\"TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ\",\"expires_in\":3600,\"token_type\":\"Bearer\",\"refresh_token\":\"4f2aw4gf5ge0c3aa3as2e4f8a958c6\"}".toByteArray()
@@ -152,7 +152,7 @@ class MockNetworkClient : NetworkClient {
         val response = NetworkResponse()
         response.statusCode = 400
         val headers: MutableMap<String, String> = mutableMapOf()
-        putStandartHeaders(headers)
+        putStandardHeaders(headers)
         response.headers = headers
         val body = "{\"error\":\"invalid_grant\"}".toByteArray()
         response.data = body
@@ -163,7 +163,7 @@ class MockNetworkClient : NetworkClient {
         val response = NetworkResponse()
         response.statusCode = 200
         val headers: MutableMap<String, String> = mutableMapOf()
-        putStandartHeaders(headers)
+        putStandardHeaders(headers)
         response.headers = headers
         val body =
             "{\"result\": [{\"type\": \"profileid\",\"value\": \"123\"},{\"type\": \"name\",\"value\": \"Identity Kit\"}]}".toByteArray()
@@ -176,7 +176,7 @@ class MockNetworkClient : NetworkClient {
         response.error = Error(ServerError())
         response.statusCode = 500
         val headers: MutableMap<String, String> = mutableMapOf()
-        putStandartHeaders(headers)
+        putStandardHeaders(headers)
         response.headers = headers
         val body = "Internal Server Error".toByteArray()
         response.data = body
@@ -192,15 +192,18 @@ class MockNetworkClient : NetworkClient {
         return response
     }
 
-    private fun putStandartHeaders(headers: MutableMap<String, String>) {
-        headers["Cache-Control"] = "no-store, no-cache, max-age=0, private"
-        headers["Pragma"] = "no-cache"
-        headers["Content-Length"] = "1000"
-        headers["Content-Type"] = "application/json; charset=utf-8"
-        headers["Server"] = "Microsoft-IIS/10.0"
-        headers["X-AspNet-Version"] = "4.0.30319"
-        headers["X-Powered-By"] = "ASP.NET"
-        headers["Date"] = "Tue, 22 Aug 2017 12:00:00 GMT"
-        headers["Connection"] = "Keep-alive"
+    companion object {
+        fun putStandardHeaders(headers: MutableMap<String, String>): MutableMap<String, String> {
+            headers["Cache-Control"] = "no-store, no-cache, max-age=0, private"
+            headers["Pragma"] = "no-cache"
+            headers["Content-Length"] = "1000"
+            headers["Content-Type"] = "application/json; charset=utf-8"
+            headers["Server"] = "Microsoft-IIS/10.0"
+            headers["X-AspNet-Version"] = "4.0.30319"
+            headers["X-Powered-By"] = "ASP.NET"
+            headers["Date"] = "Tue, 22 Aug 2017 12:00:00 GMT"
+            headers["Connection"] = "Keep-alive"
+            return headers
+        }
     }
 }
